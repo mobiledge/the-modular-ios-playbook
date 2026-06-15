@@ -1,0 +1,11 @@
+baseURL = "https://mobiledge.github.io/the-modular-ios-playbook/"
+languageCode = "en-us"
+title = "The Modular iOS Playbook"
+theme = "hugo-book"
+
+[params]
+  BookSection = "docs"
+  BookToC = true
+
+[markup.goldmark.renderer]
+  unsafe = true
