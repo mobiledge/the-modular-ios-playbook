@@ -12,7 +12,7 @@ This playbook demonstrates how to solve the real scaling challenges of iOS devel
 
 1. [Chapter 1: The Monolith (The Starting Point)](chapters/01-the-monolith.md)
 2. [Chapter 2: Extracting the Design System](chapters/02-extracting-design-system.md)
-3. [Chapter 3: Separating the Data Layer](chapters/03-separating-data-layer.md)
+3. [Chapter 3: Domain and Infrastructure Layers](chapters/03-domain-and-infrastructure.md)
 4. [Chapter 4: Vertical Slicing (Feature Modules)](chapters/04-vertical-slicing.md)
 5. [Chapter 5: Dependency Inversion & Interfaces](chapters/05-dependency-inversion.md)
 6. [Chapter 6: The Composition Root](chapters/06-composition-root.md)

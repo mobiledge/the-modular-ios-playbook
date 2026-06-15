@@ -80,4 +80,4 @@ We have established a solid foundation. In the next chapter, we will tackle the 
 
 ---
 
-> **Next Chapter:** [Chapter 3: Separating the Data Layer](./03-separating-data-layer.md)
+> **Next Chapter:** [Chapter 3: Domain and Infrastructure Layers](./03-domain-and-infrastructure.md)
