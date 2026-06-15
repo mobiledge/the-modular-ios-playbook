@@ -1,7 +1,3 @@
-Here is the updated architectural reference. I have reorganized the "Evolutionary Path" section so that each stage has its own distinct `###` header, making room for the requested architectural diagrams. All implementation TODOs have been preserved, and the flow of the document has been tightened for scannability.
-
----
-
 # iOS Modular Architecture: Vertical Slices & Infrastructure
 
 A reference summary of the modular architecture pattern for a large-scale iOS app, using an **iTunes Search** app (music, movies, audiobooks) as the concrete example.
