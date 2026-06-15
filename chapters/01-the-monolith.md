@@ -82,4 +82,4 @@ In the next chapter, we will take our first step in decomposing the iTunesSearch
 
 ---
 
-> **Next Chapter:** [Chapter 2: Extracting Core Utilities & Design System](./02-extracting-core-utilities.md)
+> **Next Chapter:** [Chapter 2: Extracting the Design System](./02-extracting-design-system.md)
