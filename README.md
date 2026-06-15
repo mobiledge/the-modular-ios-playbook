@@ -1,21 +1,19 @@
-# iOS Modular Architecture: Vertical Slices & Infrastructure
+# The Modular iOS Playbook
 
-A reference summary of the modular architecture pattern for a large-scale iOS app, using an **iTunes Search** app (music, movies, audiobooks) as the concrete example.
+A practical, step-by-step guide to evolving an iOS application from a tangled monolith to a scalable, modular architecture. 
 
-This architecture solves the scaling challenges of monolithic codebases by combining two powerful concepts:
+Throughout this playbook, we follow the journey of a fictional application, **ShopApp**. We start with a single, massive Xcode target and progressively refactor it, extracting utilities, data layers, and eventually slicing it vertically into isolated features.
 
-1. **Vertical Slices (Package by Feature):** Code is grouped by business domain (Music, Movies) rather than technical layer (DataAccess, UI).
-2. **Interface/Implementation Split:** Within each vertical slice, abstractions (protocols, entities) are strictly separated from concretions (network calls, third-party SDKs, concrete stores).
-
-Cross-cutting concerns (Network, Analytics, Feature Flags) live in a foundational **Core Infrastructure** layer, ensuring third-party dependencies never leak into domain logic.
+This playbook demonstrates how to solve the real scaling challenges of iOS development: slow build times, frequent merge conflicts, and "spaghetti" coupling.
 
 ---
 
 ## Table of Contents
 
-1. [The Evolutionary Path to Modularization](chapters/01-evolutionary-path.md)
-2. [Architecture and Package Matrix](chapters/02-architecture-and-package-matrix.md)
-3. [Core Infrastructure Implementation](chapters/03-core-infrastructure.md)
-4. [A Vertical Slice (Music Domain)](chapters/04-vertical-slice-implementation.md)
-5. [The App Module — Composition Root](chapters/05-composition-root.md)
-6. [Practical Rules for the Matrix](chapters/06-practical-rules.md)
+1. [Chapter 1: The Monolith (The Starting Point)](chapters/01-the-monolith.md)
+2. [Chapter 2: Extracting Core Utilities & Design System](chapters/02-extracting-core-utilities.md)
+3. [Chapter 3: Separating the Data Layer](chapters/03-separating-data-layer.md)
+4. [Chapter 4: Vertical Slicing (Feature Modules)](chapters/04-vertical-slicing.md)
+5. [Chapter 5: Dependency Inversion & Interfaces](chapters/05-dependency-inversion.md)
+6. [Chapter 6: The Composition Root](chapters/06-composition-root.md)
+7. [Chapter 7: Advanced Granularity & Micro-Features](chapters/07-advanced-granularity.md)
