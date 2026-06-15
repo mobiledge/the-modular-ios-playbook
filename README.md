@@ -2,7 +2,7 @@
 
 A practical, step-by-step guide to evolving an iOS application from a tangled monolith to a scalable, modular architecture. 
 
-Throughout this playbook, we follow the journey of a fictional application, **ShopApp**. We start with a single, massive Xcode target and progressively refactor it, extracting utilities, data layers, and eventually slicing it vertically into isolated features.
+Throughout this playbook, we follow the journey of a fictional application, **iTunesSearchApp** (searching for music, movies, and audiobooks). We start with a single, massive Xcode target and progressively refactor it, extracting utilities, data layers, and eventually slicing it vertically into isolated features.
 
 This playbook demonstrates how to solve the real scaling challenges of iOS development: slow build times, frequent merge conflicts, and "spaghetti" coupling.
 

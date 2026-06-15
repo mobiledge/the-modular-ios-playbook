@@ -8,32 +8,32 @@ In the context of iOS development, a monolithic architecture means that all your
 
 This isn't inherently a bad thing. In fact, for very small projects, prototypes, or indie apps maintained by a single developer, a monolithic structure is often the fastest and simplest way to build.
 
-## Our Sample Application: ShopApp
+## Our Sample Application: iTunesSearchApp
 
-Throughout this playbook, we will be refactoring a fictional e-commerce application called **ShopApp**.
+Throughout this playbook, we will be refactoring a fictional media search application called **iTunesSearchApp**.
 
-ShopApp has a few core features:
-1.  **Product Feed:** A list of products fetched from an API.
-2.  **Product Details:** A screen showing details for a specific product.
-3.  **Shopping Cart:** A local database storing items the user wants to buy.
-4.  **User Profile:** Settings and order history.
+iTunesSearchApp has a few core features:
+1.  **Music Search:** A list of music tracks fetched from the iTunes API.
+2.  **Movie Details:** A screen showing details for a specific movie.
+3.  **Audiobooks:** A screen displaying audiobook results.
+4.  **Library:** A local database storing the user's saved items.
 
-### The Anatomy of the ShopApp Monolith
+### The Anatomy of the iTunesSearchApp Monolith
 
-If we look at the Xcode project structure for our initial monolithic ShopApp, it might look something like this:
+If we look at the Xcode project structure for our initial monolithic iTunesSearchApp, it might look something like this:
 
 ```text
-ShopApp/
-├── ShopApp.xcodeproj
-└── ShopApp/
+iTunesSearchApp/
+├── iTunesSearchApp.xcodeproj
+└── iTunesSearchApp/
     ├── AppDelegate.swift
     ├── SceneDelegate.swift
     ├── Models/
-    │   ├── Product.swift
-    │   ├── CartItem.swift
-    │   └── User.swift
+    │   ├── Track.swift
+    │   ├── Movie.swift
+    │   └── Audiobook.swift
     ├── Networking/
-    │   ├── APIClient.swift
+    │   ├── iTunesAPIClient.swift
     │   └── Endpoints.swift
     ├── Database/
     │   └── CoreDataManager.swift
@@ -41,33 +41,33 @@ ShopApp/
     │   ├── Shared/
     │   │   ├── PrimaryButton.swift
     │   │   └── AppColors.swift
-    │   ├── ProductFeed/
-    │   │   ├── ProductFeedViewController.swift
-    │   │   └── ProductCell.swift
-    │   ├── ProductDetail/
-    │   │   └── ProductDetailViewController.swift
-    │   ├── Cart/
-    │   │   └── CartViewController.swift
-    │   └── Profile/
-    │       └── ProfileViewController.swift
+    │   ├── MusicSearch/
+    │   │   ├── MusicSearchViewController.swift
+    │   │   └── TrackCell.swift
+    │   ├── MovieDetail/
+    │   │   └── MovieDetailViewController.swift
+    │   ├── Audiobooks/
+    │   │   └── AudiobooksViewController.swift
+    │   └── Library/
+    │       └── LibraryViewController.swift
     └── Utilities/
         ├── DateFormatter+Extensions.swift
         └── Logger.swift
 ```
 
-Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `ProductFeedViewController` can directly instantiate `APIClient`, which can directly access `CoreDataManager`, which might use `AppColors`.
+Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchViewController` can directly instantiate `iTunesAPIClient`, which can directly access `CoreDataManager`, which might use `AppColors`.
 
 ## The Breaking Point
 
-As ShopApp becomes more successful, the team grows from 1 developer to 5, and then to 20. New features are added rapidly. This is when the monolith starts to show its cracks.
+As iTunesSearchApp becomes more successful, the team grows from 1 developer to 5, and then to 20. New features are added rapidly. This is when the monolith starts to show its cracks.
 
 Here are the typical problems teams face when scaling a monolith:
 
 1.  **Slow Build Times:** Every time you make a change to a single view, Xcode might need to recompile a significant portion of the entire application. Waiting for 3-5 minutes just to see a color change becomes normal.
-2.  **Merge Conflicts:** With 20 developers working in the same target, editing the same `APIClient.swift` or `AppColors.swift`, Git merge conflicts become a daily, painful occurrence.
-3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `CartViewController` might directly reach into the `Profile` module to check a setting, creating hidden dependencies.
-4.  **Difficult to Test:** Testing the `ProductFeed` means you have to compile the entire app, including the `Cart` and `Profile` features, even though they aren't relevant to the test.
-5.  **Scaling Teams:** It becomes difficult to assign ownership. If a bug occurs in the network layer, who owns it? If team A is working on the Cart and Team B is working on the Profile, they are constantly stepping on each other's toes.
+2.  **Merge Conflicts:** With 20 developers working in the same target, editing the same `iTunesAPIClient.swift` or `AppColors.swift`, Git merge conflicts become a daily, painful occurrence.
+3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `MusicSearchViewController` might directly reach into the `Library` module to check a setting, creating hidden dependencies.
+4.  **Difficult to Test:** Testing the `MusicSearch` means you have to compile the entire app, including the `Audiobooks` and `Library` features, even though they aren't relevant to the test.
+5.  **Scaling Teams:** It becomes difficult to assign ownership. If a bug occurs in the network layer, who owns it? If team A is working on Music and Team B is working on Movies, they are constantly stepping on each other's toes.
 
 ## The Goal of Modularization
 
@@ -78,7 +78,7 @@ Our goal is not to modularize for the sake of modularization. Our goal is to sol
 *   **Enforce Boundaries** using the compiler to prevent spaghetti code.
 *   **Enable Isolated Testing** so we can run unit tests for a specific feature in seconds, not minutes.
 
-In the next chapter, we will take our first step in decomposing the ShopApp monolith by extracting our shared utilities and design system into their own independent modules.
+In the next chapter, we will take our first step in decomposing the iTunesSearchApp monolith by extracting our shared utilities and design system into their own independent modules.
 
 ---
 

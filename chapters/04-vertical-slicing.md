@@ -1,8 +1,8 @@
 # Chapter 4: Vertical Slicing (Feature Modules)
 
-We have successfully extracted our horizontal layers: `CoreUtilities`, `DesignSystem`, and `CoreDataLayer`. However, if you look at the `ShopApp` main target, it is still massive. It contains the views, view models, and controllers for every single feature: the Product Feed, the Cart, and the User Profile.
+We have successfully extracted our horizontal layers: `CoreUtilities`, `DesignSystem`, and `CoreDataLayer`. However, if you look at the `iTunesSearchApp` main target, it is still massive. It contains the views, view models, and controllers for every single feature: Music Search, Movie Details, and Audiobooks.
 
-This is where horizontal layering fails to scale. If Team A works on the Cart and Team B works on the Profile, they are still editing the same target, dealing with the same slow build times, and facing the same merge conflicts.
+This is where horizontal layering fails to scale. If Team A works on Music Search and Team B works on Audiobooks, they are still editing the same target, dealing with the same slow build times, and facing the same merge conflicts.
 
 The solution is **Vertical Slicing**.
 
@@ -14,50 +14,50 @@ We take a single slice of functionality from the UI all the way down to its spec
 
 ## Step 1: Extracting the Feature
 
-Let's extract the User Profile feature into a new module called `FeatureProfile`.
+Let's extract the Library feature into a new module called `FeatureLibrary`.
 
-1.  **Create the Module:** Create a new target/package named `FeatureProfile`.
-2.  **Move the Code:** Move `ProfileViewController.swift` (and any associated ViewModels or specialized views) out of `ShopApp` and into `FeatureProfile`.
-3.  **Add Dependencies:** The `FeatureProfile` module needs to display the UI (using `DesignSystem`) and fetch user data (using `CoreDataLayer`). Therefore, `FeatureProfile` must declare dependencies on both.
+1.  **Create the Module:** Create a new target/package named `FeatureLibrary`.
+2.  **Move the Code:** Move `LibraryViewController.swift` (and any associated ViewModels or specialized views) out of `iTunesSearchApp` and into `FeatureLibrary`.
+3.  **Add Dependencies:** The `FeatureLibrary` module needs to display the UI (using `DesignSystem`) and fetch user data (using `CoreDataLayer`). Therefore, `FeatureLibrary` must declare dependencies on both.
 
 ```swift
-// In FeatureProfile/ProfileViewController.swift
+// In FeatureLibrary/LibraryViewController.swift
 import UIKit
 import DesignSystem
 import CoreDataLayer
 
-public class ProfileViewController: UIViewController {
-    let apiClient: APIClient
+public class LibraryViewController: UIViewController {
+    let apiClient: iTunesAPIClient
     // ...
 }
 ```
 
 ## The Power of the Preview App
 
-Once `FeatureProfile` is in its own module, we unlock a superpower: **The Preview App** (sometimes called a Demo App or Example App).
+Once `FeatureLibrary` is in its own module, we unlock a superpower: **The Preview App** (sometimes called a Demo App or Example App).
 
-We can create a tiny, lightweight application target (e.g., `FeatureProfileDemoApp`) whose sole purpose is to launch directly into the `ProfileViewController`.
+We can create a tiny, lightweight application target (e.g., `FeatureLibraryDemoApp`) whose sole purpose is to launch directly into the `LibraryViewController`.
 
-Because this Demo App only compiles the `FeatureProfile` module (and its dependencies, `CoreDataLayer` and `DesignSystem`), it compiles in seconds, not minutes. Developers can iterate on the Profile UI rapidly without ever launching the main `ShopApp`.
+Because this Demo App only compiles the `FeatureLibrary` module (and its dependencies, `CoreDataLayer` and `DesignSystem`), it compiles in seconds, not minutes. Developers can iterate on the Library UI rapidly without ever launching the main `iTunesSearchApp`.
 
 ## Extracting More Features
 
 We repeat this process for the other major features:
-- Create `FeatureProductFeed` and move `ProductFeedViewController`.
-- Create `FeatureCart` and move `CartViewController`.
+- Create `FeatureMusicSearch` and move `MusicSearchViewController`.
+- Create `FeatureAudiobooks` and move `AudiobooksViewController`.
 
 Our architecture now looks significantly better:
 
 ```text
-               ┌─────────────┐
-               │   ShopApp   │ (Main Target - Mostly empty now!)
-               └─┬─────────┬─┘
-                 │         │
-       ┌─────────▼─┐     ┌─▼─────────┐
-       │ Feature   │     │ Feature   │
-       │ Product   │     │ Profile   │
-       │ Feed      │     │           │
-       └────┬──────┘     └─────┬─────┘
+               ┌───────────────────┐
+               │  iTunesSearchApp  │ (Main Target - Mostly empty now!)
+               └─┬───────────────┬─┘
+                 │               │
+       ┌─────────▼─┐           ┌─▼─────────┐
+       │ Feature   │           │ Feature   │
+       │ Music     │           │ Library   │
+       │ Search    │           │           │
+       └────┬──────┘           └─────┬─────┘
             │                  │
             ▼                  ▼
       ┌───────────┐      ┌───────────┐
@@ -73,21 +73,23 @@ Our architecture now looks significantly better:
 
 We have solved the build time and ownership problems. But consider this scenario:
 
-Inside the `FeatureProductFeed`, the user taps a product to see its details. This means `ProductFeedViewController` needs to present `ProductDetailViewController`.
+Inside the `FeatureMusicSearch`, the user taps a track to see its details. This means `MusicSearchViewController` needs to present `MovieDetailViewController` (perhaps the track is from a movie soundtrack).
 
-If we put `ProductDetailViewController` in a `FeatureProductDetail` module, then `FeatureProductFeed` must `import FeatureProductDetail`.
+If we put `MovieDetailViewController` in a `FeatureMovieDetail` module, then `FeatureMusicSearch` must `import FeatureMovieDetail`.
 
 ```swift
-// In FeatureProductFeed
-import FeatureProductDetail // <--- DANGER!
+// In FeatureMusicSearch
+import FeatureMovieDetail // <--- DANGER!
 
-func didSelectProduct(_ product: Product) {
-    let detailVC = ProductDetailViewController(product: product)
-    navigationController?.pushViewController(detailVC, animated: true)
+func didSelectTrack(_ track: Track) {
+    if let movieID = track.associatedMovieID {
+        let detailVC = MovieDetailViewController(movieID: movieID)
+        navigationController?.pushViewController(detailVC, animated: true)
+    }
 }
 ```
 
-If we allow feature modules to depend directly on other feature modules, we will quickly recreate the spaghetti monolith, just at the module level instead of the file level. A change in the Detail module will force a recompilation of the Feed module.
+If we allow feature modules to depend directly on other feature modules, we will quickly recreate the spaghetti monolith, just at the module level instead of the file level. A change in the Movie Detail module will force a recompilation of the Music Search module.
 
 How do we navigate between features without importing them? We solve this using **Dependency Inversion**, which we will cover in the next chapter.
 

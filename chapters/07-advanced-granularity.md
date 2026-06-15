@@ -4,54 +4,54 @@ If you have successfully implemented the architecture described in chapters 1 th
 
 However, in very large organizations with hundreds of iOS developers and millions of lines of code, even a "Feature Module" can become a mini-monolith.
 
-Imagine `FeatureProductFeed` grows to contain complex caching logic, massive UI data sources, intricate animations, and analytics tracking. Modifying a label's font in this feature might still trigger a 30-second recompile of the entire module.
+Imagine `FeatureMusicSearch` grows to contain complex caching logic, massive UI data sources, intricate animations, and analytics tracking. Modifying a label's font in this feature might still trigger a 30-second recompile of the entire module.
 
 This is where we introduce the concept of **Micro-Features**.
 
 ## Splitting the Feature
 
-Instead of a single `FeatureProductFeed` module, we slice the feature horizontally *within* its vertical slice.
+Instead of a single `FeatureMusicSearch` module, we slice the feature horizontally *within* its vertical slice.
 
 A common pattern (popularized by architectures like RIBs or point-free's TCA, but applicable anywhere) is to split a feature into three to four sub-modules:
 
-1.  **ProductFeedInterface:** Contains only protocols, structs (models), and enums. It defines the public API of the feature.
-2.  **ProductFeedUI:** Contains only `UIView` subclasses, SwiftUI `View` structs, and perhaps simple UI formatters. It does not know where data comes from.
-3.  **ProductFeedLogic (or BusinessLogic):** Contains the ViewModels, Interactors, or Reducers. It handles state management and network requests (via injected services).
-4.  **ProductFeedTesting (Optional):** Contains mock implementations of the interfaces to aid in unit testing other modules.
+1.  **MusicSearchInterface:** Contains only protocols, structs (models), and enums. It defines the public API of the feature.
+2.  **MusicSearchUI:** Contains only `UIView` subclasses, SwiftUI `View` structs, and perhaps simple UI formatters. It does not know where data comes from.
+3.  **MusicSearchLogic (or BusinessLogic):** Contains the ViewModels, Interactors, or Reducers. It handles state management and network requests (via injected services).
+4.  **MusicSearchTesting (Optional):** Contains mock implementations of the interfaces to aid in unit testing other modules.
 
 ### The Dependency Graph of a Micro-Feature
 
 ```text
     ┌───────────────────────────────────┐
     │                                   │
-    │        ShopApp (Main Target)      │
+    │  iTunesSearchApp (Main Target)    │
     │        (Composition Root)         │
     │                                   │
     └─────┬──────────────────────┬──────┘
           │                      │
           ▼                      ▼
   ┌───────────────┐      ┌───────────────┐
-  │ ProductFeed   │      │ ProductFeed   │
+  │ MusicSearch   │      │ MusicSearch   │
   │ UI            │      │ Logic         │
   └───────┬───────┘      └───────┬───────┘
           │                      │
           ▼                      ▼
     ┌───────────────────────────────────┐
-    │ ProductFeed                       │
+    │ MusicSearch                       │
     │ Interface                         │
     └───────────────────────────────────┘
 ```
 
-Notice that `ProductFeedUI` and `ProductFeedLogic` **do not depend on each other**. They both depend only on `ProductFeedInterface`.
+Notice that `MusicSearchUI` and `MusicSearchLogic` **do not depend on each other**. They both depend only on `MusicSearchInterface`.
 
-The `ShopApp` Composition Root is responsible for importing both `UI` and `Logic`, instantiating the view model from `Logic`, and passing it into the view controller from `UI`.
+The `iTunesSearchApp` Composition Root is responsible for importing both `UI` and `Logic`, instantiating the view model from `Logic`, and passing it into the view controller from `UI`.
 
 ## The Extreme Benefits
 
 Why go through this extra effort?
 
-1.  **Lightning Fast UI Iteration:** If you change a color in `ProductFeedUI`, you only recompile the UI module. You don't recompile the logic, the caching mechanisms, or the analytics tracking. Build times for UI tweaks drop to milliseconds.
-2.  **Logic Testing without UIKit:** You can run unit tests on `ProductFeedLogic` without linking `UIKit` or compiling a single view. Tests run instantly.
+1.  **Lightning Fast UI Iteration:** If you change a color in `MusicSearchUI`, you only recompile the UI module. You don't recompile the logic, the caching mechanisms, or the analytics tracking. Build times for UI tweaks drop to milliseconds.
+2.  **Logic Testing without UIKit:** You can run unit tests on `MusicSearchLogic` without linking `UIKit` or compiling a single view. Tests run instantly.
 3.  **True Separation of Concerns:** It becomes physically impossible to put business logic inside a UI component because the UI module doesn't have access to the services required to execute that logic.
 
 ## When to Stop Modularizing?
