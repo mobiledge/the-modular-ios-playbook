@@ -19,7 +19,7 @@ You need a Mac with Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeG
 ```bash
 brew install xcodegen        # one time
 
-cd code/iTunesSearchApp
+cd code/ch02-design-system
 xcodegen generate            # creates iTunesSearchApp.xcodeproj from project.yml
 open iTunesSearchApp.xcodeproj
 ```

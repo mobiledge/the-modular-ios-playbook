@@ -85,14 +85,16 @@ In the next chapter, we will take our first step in decomposing the iTunesSearch
 
 ## Hands-On: Build the Monolith
 
-Theory only goes so far. A working version of the iTunesSearchApp monolith lives in the [`code/iTunesSearchApp`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/iTunesSearchApp) folder of this repository. It is a single application target containing everything—models, networking, a Core Data layer, UI, and utilities—mirroring the anatomy above. The app searches the public iTunes Search API and lets you save results to a local library.
+Theory only goes so far. A working version of the iTunesSearchApp monolith lives in the [`code/ch01-the-monolith`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch01-the-monolith) folder of this repository. It is a single application target containing everything—models, networking, a Core Data layer, UI, and utilities—mirroring the anatomy above. The app searches the public iTunes Search API and lets you save results to a local library.
+
+Each chapter has its own self-contained project folder (`ch01-the-monolith`, `ch02-design-system`, …) representing the code's state at the end of that chapter, so you can open any chapter's code and run it directly.
 
 To run it, you'll need a Mac with Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen):
 
 ```bash
 brew install xcodegen        # one time
 
-cd code/iTunesSearchApp
+cd code/ch01-the-monolith
 xcodegen generate            # creates iTunesSearchApp.xcodeproj from project.yml
 open iTunesSearchApp.xcodeproj
 ```

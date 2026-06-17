@@ -81,7 +81,7 @@ With this extraction, we start seeing immediate benefits:
 
 ## Hands-On: Extract the DesignSystem
 
-The [`code/iTunesSearchApp`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/iTunesSearchApp) project now contains a real, extracted design system as a local Swift package under [`Packages/DesignSystem`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/iTunesSearchApp/Packages/DesignSystem).
+The [`code/ch02-design-system`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch02-design-system) project now contains a real, extracted design system as a local Swift package under [`Packages/DesignSystem`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch02-design-system/Packages/DesignSystem). (It is the Chapter 1 monolith from [`code/ch01-the-monolith`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch01-the-monolith) with the design system pulled out — diff the two folders to see exactly what this chapter changes.)
 
 ### A realistic design system, not just colors
 
@@ -120,7 +120,7 @@ The compiler now *enforces* the boundary: it is impossible for a design-system c
 The project includes a second app target, **DesignSystemCatalog**, that imports *only* the design system — no models, no networking, no database. Run it to review every token and component in isolation:
 
 ```bash
-cd code/iTunesSearchApp
+cd code/ch02-design-system
 xcodegen generate
 open iTunesSearchApp.xcodeproj   # then choose the "DesignSystemCatalog" scheme
 ```
