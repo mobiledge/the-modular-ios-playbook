@@ -119,6 +119,15 @@ If `MusicSearchViewModel` calls `router.routeToMovieDetail`, who actually perfor
 
 The answer is the highest-level module in our application: the one that knows about *everything*. The Composition Root. We will explore this in the next chapter.
 
+## Hands-On
+
+[`code/ch05-dependency-inversion`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch05-dependency-inversion) performs both inversions:
+
+- **Data:** the feature packages drop their `Infrastructure` dependency. Their views are injected with the `MediaSearchRepository` / `LibraryRepository` protocols (from `Domain`) instead of constructing concrete clients.
+- **Navigation:** a new `AppInterfaces` package holds a `LibraryRouter` protocol. `FeatureLibrary` depends on it to navigate to a saved movie's detail screen — without importing `FeatureMovies`. The app's `AppLibraryRouter` builds the actual destination.
+
+You can verify the boundary mechanically: no file under `Packages/Feature*` imports `Infrastructure` or another `Feature*` module. The app target does the wiring for now; Chapter 6 extracts it into a dedicated composition root.
+
 ---
 
 > **Next:** [Chapter 6: The Composition Root]({{< relref "06-composition-root" >}})

@@ -96,6 +96,14 @@ If we allow feature modules to depend directly on other feature modules, we will
 
 How do we navigate between features without importing them? We solve this using **Dependency Inversion**, which we will cover in the next chapter.
 
+## Hands-On
+
+[`code/ch04-vertical-slicing`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch04-vertical-slicing) extracts four feature packages — `FeatureMusicSearch`, `FeatureMovies`, `FeatureAudiobooks`, `FeatureLibrary` — each depending on `DesignSystem`, `Domain`, and `Infrastructure`. The app target shrinks to just two files: the `@main` entry and a `RootView` that composes the four feature views into a `TabView`.
+
+The chapter's "preview app" is real here too: the `FeatureLibraryDemo` target launches straight into `LibraryView`, compiling only that feature and its dependencies. The same pattern works for any feature.
+
+Diff this folder against `ch03-domain-infrastructure` to see the feature views move out of the app and into packages.
+
 ---
 
 > **Next:** [Chapter 5: Dependency Inversion & Interfaces]({{< relref "05-dependency-inversion" >}})

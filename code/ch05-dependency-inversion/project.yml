@@ -1,0 +1,104 @@
+# XcodeGen project specification — Chapter 5: Dependency Inversion.
+#
+#     cd code/ch05-dependency-inversion
+#     xcodegen generate
+#     open iTunesSearchApp.xcodeproj
+#
+# Feature packages no longer depend on Infrastructure — only on Domain
+# abstractions and the new AppInterfaces (router protocols). The app target
+# wires concretes in (Chapter 6 formalizes that into a composition root).
+
+name: iTunesSearchApp
+
+options:
+  bundleIdPrefix: com.playbook
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  DesignSystem:
+    path: Packages/DesignSystem
+  Domain:
+    path: Packages/Domain
+  Infrastructure:
+    path: Packages/Infrastructure
+  AppInterfaces:
+    path: Packages/AppInterfaces
+  FeatureMusicSearch:
+    path: Packages/FeatureMusicSearch
+  FeatureMovies:
+    path: Packages/FeatureMovies
+  FeatureAudiobooks:
+    path: Packages/FeatureAudiobooks
+  FeatureLibrary:
+    path: Packages/FeatureLibrary
+
+targets:
+  iTunesSearchApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    dependencies:
+      - package: DesignSystem
+      - package: Domain
+      - package: Infrastructure
+      - package: AppInterfaces
+      - package: FeatureMusicSearch
+      - package: FeatureMovies
+      - package: FeatureAudiobooks
+      - package: FeatureLibrary
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.iTunesSearchApp
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+
+  FeatureLibraryDemo:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DemoApps/FeatureLibraryDemo
+    dependencies:
+      - package: FeatureLibrary
+      - package: Infrastructure
+      - package: AppInterfaces
+      - package: Domain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.FeatureLibraryDemo
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+
+  DesignSystemCatalog:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Catalog
+    dependencies:
+      - package: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.DesignSystemCatalog
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES

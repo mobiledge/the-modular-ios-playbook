@@ -66,6 +66,18 @@ Start with the vertical slicing we discussed in Chapter 4. Only split a feature 
 
 Modularization is a tool to solve human scaling problems, not an academic exercise. Scale your architecture as your team scales.
 
+## Hands-On
+
+[`code/ch07-advanced-granularity`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch07-advanced-granularity) splits **only** the Music Search feature into three micro-modules inside one package:
+
+- `MusicSearchInterface` — the `MusicSearchViewModeling` protocol (the contract), depending only on `Domain`.
+- `MusicSearchUI` — `MusicSearchScreen`, generic over that protocol. Pure SwiftUI.
+- `MusicSearchLogic` — `MusicSearchViewModel`, conforming to the protocol, using injected repositories. No SwiftUI.
+
+`MusicSearchUI` and `MusicSearchLogic` depend only on `MusicSearchInterface`, never on each other; the composition root builds the view model (Logic) and hands it to the screen (UI). The other three features are intentionally left whole — split a feature only when it actually hurts.
+
+Across all seven folders, each `chNN-…` directory is a complete, runnable XcodeGen project representing that chapter's end state, so you can open any chapter and build it directly.
+
 ---
 
 **Congratulations!** You've completed the Modular iOS Playbook journey, evolving a tangled monolith into a highly scalable, granular architecture.

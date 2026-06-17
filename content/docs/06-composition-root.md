@@ -106,6 +106,16 @@ By pushing all instantiation and routing logic to the very top of the applicatio
 
 For many teams, reaching this level of modularity is enough. However, for massive applications (hundreds of developers), even feature modules can become too large. In our final chapter, we will look at how to decompose features into micro-features.
 
+## Hands-On
+
+[`code/ch06-composition-root`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch06-composition-root) has the same module graph as Chapter 5, but the wiring moves into `Sources/App/CompositionRoot/`:
+
+- `AppFactory` is the single type that imports every module, owns the repository instances, and builds each screen with dependencies injected (`makeMusicSearch()`, `makeLibrary()`, …).
+- `AppRouter` implements `LibraryRouter` by delegating to the factory — the SwiftUI equivalent of a Coordinator.
+- `RootView` becomes trivial: it just calls `factory.make…()` for each tab and knows nothing about repositories or routers.
+
+The `FeatureLibraryDemo` target is, as the chapter notes, a miniature composition root: it injects a real repository and a stub router exactly as `AppFactory` does.
+
 ---
 
 > **Next:** [Chapter 7: Advanced Granularity & Micro-Features]({{< relref "07-advanced-granularity" >}})

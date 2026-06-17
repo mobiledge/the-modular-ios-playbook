@@ -72,6 +72,53 @@ By applying Uncle Bob's Clean Architecture concepts, we gain massive advantages:
 1.  **Testability:** Because the Domain layer has no external dependencies, we can write blazing-fast unit tests for our core business logic without ever making a network request or writing to a disk. We simply pass in mock implementations of our Infrastructure protocols.
 2.  **Flexibility:** Want to swap out your third-party analytics provider? Or move from CoreData to Realm? You only need to change the `Infrastructure` module. The `Domain` layer and the `iTunesSearchApp` remain completely unaffected.
 
+## Hands-On: Split into Domain and Infrastructure
+
+The [`code/ch03-domain-infrastructure`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch03-domain-infrastructure) project applies both steps. Diff it against `ch02-design-system` to see exactly what moved.
+
+### The Domain package
+
+[`Packages/Domain`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch03-domain-infrastructure/Packages/Domain) contains only plain Swift:
+
+- **Entities** — `Track`, `Movie`, `Audiobook`, `SavedItem`, and a `MediaType` enum. Notice they use concept-first names (`name`, `artist`, `artworkURL`) rather than the iTunes JSON names. They are no longer `Decodable`; decoding is an outside concern.
+- **Repository protocols** — `MediaSearchRepository` and `LibraryRepository`. The domain declares *what* it needs, not *how*.
+- **A use case** — `SearchMediaUseCase`, which trims and validates a query before delegating to a repository.
+
+Crucially, the Domain's `Package.swift` declares **no dependencies**, and no file in it imports SwiftUI, Core Data, or any networking API.
+
+### The Infrastructure package
+
+[`Packages/Infrastructure`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch03-domain-infrastructure/Packages/Infrastructure) `depends on Domain` and provides the concrete details:
+
+- `SearchDTOs.swift` holds the `Decodable` DTOs that know the iTunes JSON shape (`trackName`, `artworkUrl100`, …) and map themselves to domain entities. This is the *only* file that changes if the API's JSON changes.
+- `ITunesSearchRepository` implements `MediaSearchRepository` with `URLSession`.
+- `CoreDataLibraryRepository` (over an internal `CoreDataStack`) implements `LibraryRepository`.
+
+### What the app looks like now
+
+The feature views import `Domain` and `Infrastructure`. They program against the protocols and entities, and only reach for a concrete type to *construct* it:
+
+```swift
+private let search = SearchMediaUseCase(repository: ITunesSearchRepository())
+private let library: LibraryRepository = CoreDataLibraryRepository()
+```
+
+That inline construction is the last bit of coupling; Chapter 6's composition root removes it.
+
+### The payoff, made real
+
+Because `SearchMediaUseCase` depends only on a protocol, [`Packages/Domain/Tests/DomainTests`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch03-domain-infrastructure/Packages/Domain/Tests/DomainTests) verifies its logic with a hand-written mock repository — no network, no disk, milliseconds to run:
+
+```swift
+func testBlankQueryReturnsEmptyAndNeverHitsRepository() async throws {
+    let repo = MockSearchRepository()
+    let useCase = SearchMediaUseCase(repository: repo)
+    let results = try await useCase.music(matching: "   ")
+    XCTAssertEqual(results, [])
+    XCTAssertEqual(repo.musicCallCount, 0)
+}
+```
+
 Our core business logic is now safe and isolated. But the UI and features in `iTunesSearchApp` are still a massive, tangled web of screens. In the next chapter, we will introduce "Vertical Slicing" to break apart the features themselves.
 
 ---
