@@ -79,6 +79,54 @@ With this extraction, we start seeing immediate benefits:
 2.  **Faster UI Iteration:** If a developer is working purely on tweaking a button style, they can compile just the `DesignSystem` module and its catalog app, completely bypassing the compilation of the massive `iTunesSearchApp` target.
 3.  **Clearer Boundaries:** It is now architecturally impossible for `AppColors.swift` to accidentally import or use a domain model like `Track.swift`. The compiler will throw an error, protecting our foundation.
 
+## Hands-On: Extract the DesignSystem
+
+The [`code/iTunesSearchApp`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/iTunesSearchApp) project now contains a real, extracted design system as a local Swift package under [`Packages/DesignSystem`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/iTunesSearchApp/Packages/DesignSystem).
+
+### A realistic design system, not just colors
+
+A design system is more than a color palette. Ours is built in layers:
+
+*   **Tokens** — the primitives. `DSColors` is a small semantic palette (brand, surfaces, text, status). `DSFont` defines a single font *design*, a fixed type *scale*, and a set of weights, then composes them into semantic styles (`largeTitle`, `headline`, `body`, …). `DSSpacing` and `DSRadius` give a consistent rhythm.
+*   **Components** — built *by composing tokens*. `DSText` pairs a font with a default color. `DSButton`, `DSCard`, and `DSTag` combine color, type, and radius. The highest-level component, `DSMediaRow`, is assembled entirely from `DSArtwork` + `DSText` + spacing — so every media list in the app (Music, Audiobooks, Library) looks identical for free.
+
+Because everything is composed from a handful of tokens, the entire app can be re-themed by editing one or two files.
+
+### How the extraction was done
+
+The package is wired into the project via [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+
+```yaml
+packages:
+  DesignSystem:
+    path: Packages/DesignSystem
+
+targets:
+  iTunesSearchApp:
+    dependencies:
+      - package: DesignSystem
+```
+
+Three things made this work, exactly as outlined above:
+
+1.  The shared UI files moved out of `Sources/Views/Shared/` and into the package.
+2.  Their types became `public` (along with their initializers), since the app now consumes them across a module boundary.
+3.  Every feature file that uses them now starts with `import DesignSystem`.
+
+The compiler now *enforces* the boundary: it is impossible for a design-system component to reach back into `Track`, `iTunesAPIClient`, or `CoreDataManager`.
+
+### The payoff: a Catalog app
+
+The project includes a second app target, **DesignSystemCatalog**, that imports *only* the design system — no models, no networking, no database. Run it to review every token and component in isolation:
+
+```bash
+cd code/iTunesSearchApp
+xcodegen generate
+open iTunesSearchApp.xcodeproj   # then choose the "DesignSystemCatalog" scheme
+```
+
+Because it depends on nothing but `DesignSystem`, it compiles almost instantly — the "faster UI iteration" benefit, made concrete.
+
 We have established a solid foundation. In the next chapter, we will tackle the core of our business logic: the data layer.
 
 ---

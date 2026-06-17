@@ -1,4 +1,5 @@
 import SwiftUI
+import DesignSystem
 
 /// Searches and lists audiobooks, with a save-to-library toggle per row.
 struct AudiobooksView: View {
@@ -14,10 +15,24 @@ struct AudiobooksView: View {
         NavigationStack {
             List {
                 if let errorMessage {
-                    Text(errorMessage).foregroundStyle(.red)
+                    DSText(errorMessage, style: .callout, color: DSColors.danger)
                 }
                 ForEach(books) { book in
-                    row(for: book)
+                    DSMediaRow(
+                        title: book.collectionName,
+                        subtitle: book.artistName,
+                        caption: book.primaryGenreName,
+                        artworkURL: book.artworkUrl100
+                    ) {
+                        Button {
+                            toggleSave(book)
+                        } label: {
+                            Image(systemName: db.isSaved(id: Int64(book.collectionId), mediaType: "audiobook") ? "checkmark.circle.fill" : "plus.circle")
+                                .foregroundStyle(DSColors.brand)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .listStyle(.plain)
@@ -27,30 +42,6 @@ struct AudiobooksView: View {
             .overlay { if isLoading { ProgressView() } }
             .task { await search() }
         }
-    }
-
-    @ViewBuilder
-    private func row(for book: Audiobook) -> some View {
-        HStack(spacing: 12) {
-            ArtworkView(url: book.artworkUrl100)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(book.collectionName).font(.headline).lineLimit(2)
-                Text(book.artistName)
-                    .font(.subheadline)
-                    .foregroundStyle(AppColors.secondaryText)
-                    .lineLimit(1)
-            }
-            Spacer()
-            Button {
-                toggleSave(book)
-            } label: {
-                Image(systemName: db.isSaved(id: Int64(book.collectionId), mediaType: "audiobook") ? "checkmark.circle.fill" : "plus.circle")
-                    .foregroundStyle(AppColors.primary)
-                    .imageScale(.large)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 4)
     }
 
     private func toggleSave(_ book: Audiobook) {

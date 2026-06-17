@@ -1,13 +1,16 @@
-# iTunesSearchApp — Chapter 1: The Monolith
+# iTunesSearchApp — Playbook Sample Project
 
-This is the starting point for the playbook: a fully working iOS app built as a
-**single application target**. Every layer — models, networking, persistence,
-UI, and utilities — lives in one bucket, exactly as described in
-[Chapter 1](../../content/docs/01-the-monolith.md). Later chapters progressively
-break it apart.
+A fully working iOS app that we refactor chapter by chapter. It searches the
+public **iTunes Search API** (no API key needed) for music, movies, and
+audiobooks, and lets you save items to a local **Core Data** library.
 
-The app searches the public **iTunes Search API** (no API key needed) for music,
-movies, and audiobooks, and lets you save items to a local **Core Data** library.
+The git history tracks the playbook:
+
+- **Chapter 1 — The Monolith:** everything lives in one application target.
+  See [`content/docs/01-the-monolith.md`](../../content/docs/01-the-monolith.md).
+- **Chapter 2 — Extracting the Design System:** the shared UI is pulled into a
+  local Swift package, `Packages/DesignSystem`, and a standalone **Catalog**
+  app target is added. See [`content/docs/02-extracting-design-system.md`](../../content/docs/02-extracting-design-system.md).
 
 ## Run it
 
@@ -21,7 +24,19 @@ xcodegen generate            # creates iTunesSearchApp.xcodeproj from project.ym
 open iTunesSearchApp.xcodeproj
 ```
 
-Then pick an iOS Simulator and press **Run** (⌘R).
+Pick a scheme — **iTunesSearchApp** for the full app, or **DesignSystemCatalog**
+to browse the design system in isolation — choose a simulator, and press **Run** (⌘R).
+
+## The DesignSystem package
+
+`Packages/DesignSystem` is a layered, reusable design system:
+
+- **Tokens:** `DSColors` (semantic palette), `DSFont` (primitive type scale +
+  semantic styles), `DSSpacing` / `DSRadius`.
+- **Components (composed from tokens):** `DSText`, `DSButton`, `DSCard`,
+  `DSTag`, `DSArtwork`, `DSMediaRow`, `DSSectionHeader`.
+
+The app and the catalog both depend on it; it depends on nothing but SwiftUI.
 
 > The `.xcodeproj` is intentionally **not** committed — it's a generated
 > artifact. Re-run `xcodegen generate` any time the source layout changes.
@@ -37,7 +52,7 @@ lifecycle, so a couple of files are renamed but the structure is the same:
 | `Models/Track,Movie,Audiobook` | `Models/` | iTunes API response types |
 | `Networking/iTunesAPIClient,Endpoints` | `Networking/` | `async`/`await` URLSession client |
 | `Database/CoreDataManager` | `Database/CoreDataManager.swift` | Core Data with a programmatic model (no `.xcdatamodeld`) |
-| `Views/Shared/PrimaryButton,AppColors` | `Views/Shared/` | plus a small `ArtworkView` helper |
+| `Views/Shared/PrimaryButton,AppColors` | `Packages/DesignSystem/` | extracted into a Swift package in Chapter 2 (`DSButton`, `DSColors`, …) |
 | `Views/MusicSearch/...ViewController,TrackCell` | `Views/MusicSearch/MusicSearchView.swift`, `TrackRow.swift` | |
 | `Views/MovieDetail/...ViewController` | `Views/MovieDetail/MoviesView.swift`, `MovieDetailView.swift` | |
 | `Views/Audiobooks/...ViewController` | `Views/Audiobooks/AudiobooksView.swift` | |

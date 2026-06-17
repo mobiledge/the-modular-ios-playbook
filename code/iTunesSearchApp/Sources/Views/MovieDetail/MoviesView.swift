@@ -1,4 +1,5 @@
 import SwiftUI
+import DesignSystem
 
 /// Searches movies and pushes to a detail screen on tap.
 struct MoviesView: View {
@@ -13,17 +14,11 @@ struct MoviesView: View {
         NavigationStack {
             List(movies) { movie in
                 NavigationLink(value: movie) {
-                    HStack(spacing: 12) {
-                        ArtworkView(url: movie.artworkUrl100)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(movie.trackName).font(.headline).lineLimit(2)
-                            if let genre = movie.primaryGenreName {
-                                Text(genre)
-                                    .font(.caption)
-                                    .foregroundStyle(AppColors.secondaryText)
-                            }
-                        }
-                    }
+                    DSMediaRow(
+                        title: movie.trackName,
+                        subtitle: movie.primaryGenreName,
+                        artworkURL: movie.artworkUrl100
+                    )
                 }
             }
             .listStyle(.plain)

@@ -1,4 +1,5 @@
 import SwiftUI
+import DesignSystem
 
 /// Displays everything the user has saved locally, across all media types.
 struct LibraryView: View {
@@ -16,21 +17,12 @@ struct LibraryView: View {
                 } else {
                     List {
                         ForEach(model.items) { item in
-                            HStack(spacing: 12) {
-                                ArtworkView(url: item.artworkURL.flatMap(URL.init(string:)))
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.title).font(.headline).lineLimit(1)
-                                    if let subtitle = item.subtitle {
-                                        Text(subtitle)
-                                            .font(.subheadline)
-                                            .foregroundStyle(AppColors.secondaryText)
-                                            .lineLimit(1)
-                                    }
-                                    Text(item.mediaType.capitalized)
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
+                            DSMediaRow(
+                                title: item.title,
+                                subtitle: item.subtitle,
+                                caption: item.mediaType.capitalized,
+                                artworkURL: item.artworkURL.flatMap(URL.init(string:))
+                            )
                         }
                         .onDelete(perform: model.delete)
                     }

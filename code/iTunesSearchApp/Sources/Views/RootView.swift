@@ -1,4 +1,5 @@
 import SwiftUI
+import DesignSystem
 
 /// The app's root tab bar, wiring together the four core features.
 ///
@@ -20,7 +21,7 @@ struct RootView: View {
             LibraryView()
                 .tabItem { Label("Library", systemImage: "books.vertical") }
         }
-        .tint(AppColors.primary)
+        .tint(DSColors.brand)
     }
 }
 

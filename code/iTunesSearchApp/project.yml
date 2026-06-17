@@ -23,6 +23,12 @@ settings:
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 
+# Local Swift packages, referenced by path. The DesignSystem was extracted out
+# of the app target in Chapter 2.
+packages:
+  DesignSystem:
+    path: Packages/DesignSystem
+
 targets:
   iTunesSearchApp:
     type: application
@@ -30,6 +36,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: Sources
+    dependencies:
+      - package: DesignSystem
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.playbook.iTunesSearchApp
@@ -40,3 +48,23 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+
+  # A standalone catalog app that imports ONLY the DesignSystem. Designers and
+  # developers can run this to review components in isolation from the app's
+  # business logic and network — one of the big payoffs of the extraction.
+  DesignSystemCatalog:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Catalog
+    dependencies:
+      - package: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.DesignSystemCatalog
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
