@@ -83,6 +83,34 @@ Our goal is not to modularize for the sake of modularization. Our goal is to sol
 
 In the next chapter, we will take our first step in decomposing the iTunesSearchApp monolith by extracting our shared utilities and design system into their own independent modules.
 
+## Hands-On: Build the Monolith
+
+Theory only goes so far. A working version of the iTunesSearchApp monolith lives in the [`code/iTunesSearchApp`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/iTunesSearchApp) folder of this repository. It is a single application target containing everything—models, networking, a Core Data layer, UI, and utilities—mirroring the anatomy above. The app searches the public iTunes Search API and lets you save results to a local library.
+
+To run it, you'll need a Mac with Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+
+```bash
+brew install xcodegen        # one time
+
+cd code/iTunesSearchApp
+xcodegen generate            # creates iTunesSearchApp.xcodeproj from project.yml
+open iTunesSearchApp.xcodeproj
+```
+
+Pick an iOS Simulator and press **Run** (⌘R). You'll get a four-tab app—Music, Movies, Audiobooks, and Library—that fetches live results and persists saved items.
+
+We use [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the Xcode project from a small `project.yml` rather than committing the `.xcodeproj`. This keeps the project file out of source control, which—conveniently—eliminates one of the biggest sources of merge conflicts in a monolith. It also makes the structural changes in later chapters easy to express as plain text.
+
+### Feel the Coupling
+
+The sample code is deliberately tangled to make later chapters' refactors concrete. Search the sources for `MONOLITH NOTE` to find each pain point:
+
+*   **Feature views instantiate `iTunesAPIClient.shared` directly.** There is no protocol or injection, so the Music feature cannot compile or be tested without the networking layer.
+*   **List rows reach straight into `CoreDataManager.shared`.** The UI is welded to the database.
+*   **`RootView` knows about every feature**, and shared tokens like `AppColors` and `Logger` are global to the whole target.
+
+These are exactly the knots we'll untie. By the end of the playbook, each will be replaced by an explicit, compiler-enforced boundary.
+
 ---
 
 > **Next:** [Chapter 2: Extracting the Design System]({{< relref "02-extracting-design-system" >}})
