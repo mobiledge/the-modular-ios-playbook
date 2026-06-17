@@ -1,6 +1,13 @@
 import SwiftUI
 
-/// Searches movies and pushes to a detail screen on tap.
+/// Searches the iTunes catalog for movies and lists the results.
+///
+/// This mirrors `MusicSearchView` exactly: search, fetch, list. No detail
+/// screen, no persistence — just present what the network returned.
+///
+/// MONOLITH NOTE: like the Music feature, this view holds a direct reference to
+/// the concrete `iTunesAPIClient.shared`. There is no injected dependency and no
+/// protocol, so Movies cannot be compiled or tested without the networking code.
 struct MoviesView: View {
     @State private var term = "Star Wars"
     @State private var movies: [Movie] = []
@@ -11,24 +18,16 @@ struct MoviesView: View {
 
     var body: some View {
         NavigationStack {
-            List(movies) { movie in
-                NavigationLink(value: movie) {
-                    HStack(spacing: 12) {
-                        ArtworkView(url: movie.artworkUrl100)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(movie.trackName).font(.headline).lineLimit(2)
-                            if let genre = movie.primaryGenreName {
-                                Text(genre)
-                                    .font(.caption)
-                                    .foregroundStyle(AppColors.secondaryText)
-                            }
-                        }
-                    }
+            List {
+                if let errorMessage {
+                    Text(errorMessage).foregroundStyle(.red)
+                }
+                ForEach(movies) { movie in
+                    MovieRow(movie: movie)
                 }
             }
             .listStyle(.plain)
             .navigationTitle("Movies")
-            .navigationDestination(for: Movie.self) { MovieDetailView(movie: $0) }
             .searchable(text: $term, prompt: "Search movies")
             .onSubmit(of: .search) { Task { await search() } }
             .overlay { if isLoading { ProgressView() } }

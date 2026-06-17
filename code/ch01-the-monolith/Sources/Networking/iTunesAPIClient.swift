@@ -32,10 +32,6 @@ final class iTunesAPIClient {
         try await search(term: term, media: "movie", entity: "movie")
     }
 
-    func searchAudiobooks(term: String) async throws -> [Audiobook] {
-        try await search(term: term, media: "audiobook", entity: "audiobook")
-    }
-
     private func search<T: Decodable>(term: String, media: String, entity: String) async throws -> [T] {
         let url = Endpoints.search(term: term, media: media, entity: entity)
         Logger.log("GET \(url.absoluteString)")

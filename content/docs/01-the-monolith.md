@@ -15,11 +15,11 @@ This isn't inherently a bad thing. In fact, for very small projects, prototypes,
 
 Throughout this playbook, we will be refactoring a fictional media search application called **iTunesSearchApp**.
 
-iTunesSearchApp has a few core features:
-1.  **Music Search:** A list of music tracks fetched from the iTunes API.
-2.  **Movie Details:** A screen showing details for a specific movie.
-3.  **Audiobooks:** A screen displaying audiobook results.
-4.  **Library:** A local database storing the user's saved items.
+iTunesSearchApp has a couple of core features:
+1.  **Music Search:** A searchable list of music tracks fetched from the iTunes API.
+2.  **Movie Search:** A searchable list of movies fetched from the iTunes API.
+
+Both features work the same way: type a query, hit the network, and present the results in a list. There is no local database — the app simply shows what the API returns.
 
 ### The Anatomy of the iTunesSearchApp Monolith
 
@@ -33,32 +33,26 @@ iTunesSearchApp/
     ├── SceneDelegate.swift
     ├── Models/
     │   ├── Track.swift
-    │   ├── Movie.swift
-    │   └── Audiobook.swift
+    │   └── Movie.swift
     ├── Networking/
     │   ├── iTunesAPIClient.swift
     │   └── Endpoints.swift
-    ├── Database/
-    │   └── CoreDataManager.swift
     ├── Views/
     │   ├── Shared/
     │   │   ├── PrimaryButton.swift
     │   │   └── AppColors.swift
-    │   ├── MusicSearch/
+    │   ├── Music/
     │   │   ├── MusicSearchViewController.swift
     │   │   └── TrackCell.swift
-    │   ├── MovieDetail/
-    │   │   └── MovieDetailViewController.swift
-    │   ├── Audiobooks/
-    │   │   └── AudiobooksViewController.swift
-    │   └── Library/
-    │       └── LibraryViewController.swift
+    │   └── Movies/
+    │       ├── MoviesViewController.swift
+    │       └── MovieCell.swift
     └── Utilities/
         ├── DateFormatter+Extensions.swift
         └── Logger.swift
 ```
 
-Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchViewController` can directly instantiate `iTunesAPIClient`, which can directly access `CoreDataManager`, which might use `AppColors`.
+Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchViewController` can directly instantiate `iTunesAPIClient`, which can freely reach for shared globals like `Logger` and `AppColors`. Nothing in the compiler stops any file from touching any other.
 
 ## The Breaking Point
 
@@ -68,8 +62,8 @@ Here are the typical problems teams face when scaling a monolith:
 
 1.  **Slow Build Times:** Every time you make a change to a single view, Xcode might need to recompile a significant portion of the entire application. Waiting for 3-5 minutes just to see a color change becomes normal.
 2.  **Merge Conflicts:** With 20 developers working in the same target, editing the same `iTunesAPIClient.swift` or `AppColors.swift`, Git merge conflicts become a daily, painful occurrence.
-3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `MusicSearchViewController` might directly reach into the `Library` module to check a setting, creating hidden dependencies. Folders are only a suggestion — nothing *stops* this. Over time, every part of the app can touch every other part, and the structure you see in the file tree no longer reflects how the code actually connects. When something breaks, there is no longer an obvious place to look.
-4.  **Difficult to Test:** Testing the `MusicSearch` means you have to compile the entire app, including the `Audiobooks` and `Library` features, even though they aren't relevant to the test.
+3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `MusicSearchViewController` might directly reach into the `Movies` feature's code, creating hidden dependencies. Folders are only a suggestion — nothing *stops* this. Over time, every part of the app can touch every other part, and the structure you see in the file tree no longer reflects how the code actually connects. When something breaks, there is no longer an obvious place to look.
+4.  **Difficult to Test:** Testing the `MusicSearch` means you have to compile the entire app, including the `Movies` feature, even though it isn't relevant to the test.
 5.  **Scaling Teams:** It becomes difficult to assign ownership. If a bug occurs in the network layer, who owns it? If team A is working on Music and Team B is working on Movies, they are constantly stepping on each other's toes.
 
 ## The Goal of Modularization
@@ -82,7 +76,7 @@ The single most important reason to modularize is this: **you can use the compil
 
 In a monolith, separation of concerns is a matter of discipline. You *intend* for the network layer and the database layer to stay separate, but nothing stops a tired developer at 5pm from reaching across that line. Folders don't enforce anything. Code review catches some of it, but not reliably, and not forever.
 
-When each concern lives in its own module, the boundary stops being a suggestion and becomes a rule. If `MusicSearch` is not *allowed* to import `Library`, the code simply won't compile. The architecture you drew on the whiteboard is now the architecture you actually have, because the build system refuses to let it drift. This buys you two things that compound every single day:
+When each concern lives in its own module, the boundary stops being a suggestion and becomes a rule. If `MusicSearch` is not *allowed* to import `Movies`, the code simply won't compile. The architecture you drew on the whiteboard is now the architecture you actually have, because the build system refuses to let it drift. This buys you two things that compound every single day:
 
 *   **Separation of concerns is enforced, not hoped for.** A module can only touch what it explicitly depends on. Shortcuts and hidden dependencies become compile errors instead of landmines you discover six months later.
 *   **You always know where to look.** When something breaks, the boundaries tell you where the problem can and cannot be. And before you ever open a file, the module graph gives you a true, high-level map of how the app fits together — what depends on what, and where any given piece of logic belongs.
@@ -103,7 +97,7 @@ In the next chapter, we will take our first step in decomposing the iTunesSearch
 
 ## Hands-On: Build the Monolith
 
-Theory only goes so far. A working version of the iTunesSearchApp monolith lives in the [`code/ch01-the-monolith`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch01-the-monolith) folder of this repository. It is a single application target containing everything—models, networking, a Core Data layer, UI, and utilities—mirroring the anatomy above. The app searches the public iTunes Search API and lets you save results to a local library.
+Theory only goes so far. A working version of the iTunesSearchApp monolith lives in the [`code/ch01-the-monolith`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch01-the-monolith) folder of this repository. It is a single application target containing everything—models, networking, UI, and utilities—mirroring the anatomy above. The app searches the public iTunes Search API for music and movies and presents the results in a list.
 
 Each chapter has its own self-contained project folder (`ch01-the-monolith`, `ch02-design-system`, …) representing the code's state at the end of that chapter, so you can open any chapter's code and run it directly.
 
@@ -117,7 +111,7 @@ xcodegen generate            # creates iTunesSearchApp.xcodeproj from project.ym
 open iTunesSearchApp.xcodeproj
 ```
 
-Pick an iOS Simulator and press **Run** (⌘R). You'll get a four-tab app—Music, Movies, Audiobooks, and Library—that fetches live results and persists saved items.
+Pick an iOS Simulator and press **Run** (⌘R). You'll get a two-tab app—Music and Movies—that fetches live results from the iTunes Search API and lists them.
 
 We use [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the Xcode project from a small `project.yml` rather than committing the `.xcodeproj`. This keeps the project file out of source control, which—conveniently—eliminates one of the biggest sources of merge conflicts in a monolith. It also makes the structural changes in later chapters easy to express as plain text.
 
@@ -125,8 +119,7 @@ We use [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the Xcode p
 
 The sample code is deliberately tangled to make later chapters' refactors concrete. Search the sources for `MONOLITH NOTE` to find each pain point:
 
-*   **Feature views instantiate `iTunesAPIClient.shared` directly.** There is no protocol or injection, so the Music feature cannot compile or be tested without the networking layer.
-*   **List rows reach straight into `CoreDataManager.shared`.** The UI is welded to the database.
+*   **Feature views instantiate `iTunesAPIClient.shared` directly.** There is no protocol or injection, so the Music and Movies features cannot compile or be tested without the networking layer.
 *   **`RootView` knows about every feature**, and shared tokens like `AppColors` and `Logger` are global to the whole target.
 
 These are exactly the knots we'll untie. By the end of the playbook, each will be replaced by an explicit, compiler-enforced boundary.
