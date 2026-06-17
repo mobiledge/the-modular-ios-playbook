@@ -38,7 +38,7 @@ lifecycle, so a couple of files are renamed but the structure is the same:
 |---|---|---|
 | `AppDelegate` / `SceneDelegate` | `App/iTunesSearchApp.swift`, `Views/RootView.swift` | SwiftUI `App` + `TabView` replace the UIKit lifecycle |
 | `Models/Track,Podcast` | `Models/` | iTunes API response types |
-| `Networking/iTunesAPIClient,Endpoints` | `Networking/` | `async`/`await` URLSession client |
+| `Networking/iTunesAPIClient,Endpoint` | `Networking/` | `Endpoint` enum builds URLs; client runs the request |
 | `Views/Shared/PrimaryButton,AppColors` | `Views/Shared/` | plus a small `ArtworkView` helper |
 | `Views/Music/...ViewController,TrackCell` | `Views/Music/MusicSearchView.swift`, `TrackRow.swift` | search + list |
 | `Views/Podcasts/...ViewController,PodcastCell` | `Views/Podcasts/PodcastsView.swift`, `PodcastRow.swift` | search + list (mirrors Music) |

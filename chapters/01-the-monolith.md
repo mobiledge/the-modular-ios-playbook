@@ -33,7 +33,7 @@ iTunesSearchApp/
     │   └── Podcast.swift
     ├── Networking/
     │   ├── iTunesAPIClient.swift
-    │   └── Endpoints.swift
+    │   └── Endpoint.swift
     ├── Views/
     │   ├── Shared/
     │   │   ├── PrimaryButton.swift

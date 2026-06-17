@@ -2,6 +2,10 @@ import Foundation
 
 /// Talks to the iTunes Search API.
 ///
+/// The client owns the *mechanics* of a request — running the session, checking
+/// the status code, and decoding the JSON envelope. *Which* URL to hit is the
+/// `Endpoint`'s job, so this type stays free of any per-feature URL knowledge.
+///
 /// MONOLITH NOTE: this is exposed as a global `shared` singleton, and every
 /// feature view instantiates it directly. There is no protocol boundary, so a
 /// view in the Music feature is hard-wired to this concrete networking class.
@@ -47,15 +51,17 @@ final class iTunesAPIClient {
     }
 
     func searchMusic(term: String) async throws -> [Track] {
-        try await search(term: term, media: "music", entity: "song")
+        try await fetch(.music(term: term))
     }
 
     func searchPodcasts(term: String) async throws -> [Podcast] {
-        try await search(term: term, media: "podcast", entity: "podcast")
+        try await fetch(.podcasts(term: term))
     }
 
-    private func search<T: Decodable>(term: String, media: String, entity: String) async throws -> [T] {
-        let url = Endpoints.search(term: term, media: media, entity: entity)
+    /// Runs the request for an `Endpoint` and decodes its results. The element
+    /// type is inferred from the call site (e.g. `[Track]` vs `[Podcast]`).
+    private func fetch<T: Decodable>(_ endpoint: Endpoint) async throws -> [T] {
+        let url = endpoint.url
         Logger.log("GET \(url.absoluteString)")
 
         let (data, response) = try await session.data(from: url)
