@@ -1,16 +1,16 @@
 import SwiftUI
 
-/// Searches the iTunes catalog for movies and lists the results.
+/// Searches the iTunes catalog for podcasts and lists the results.
 ///
 /// This mirrors `MusicSearchView` exactly: search, fetch, list. No detail
 /// screen, no persistence — just present what the network returned.
 ///
 /// MONOLITH NOTE: like the Music feature, this view holds a direct reference to
 /// the concrete `iTunesAPIClient.shared`. There is no injected dependency and no
-/// protocol, so Movies cannot be compiled or tested without the networking code.
-struct MoviesView: View {
-    @State private var term = "Star Wars"
-    @State private var movies: [Movie] = []
+/// protocol, so Podcasts cannot be compiled or tested without the networking code.
+struct PodcastsView: View {
+    @State private var term = "The Daily"
+    @State private var podcasts: [Podcast] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -22,13 +22,13 @@ struct MoviesView: View {
                 if let errorMessage {
                     Text(errorMessage).foregroundStyle(.red)
                 }
-                ForEach(movies) { movie in
-                    MovieRow(movie: movie)
+                ForEach(podcasts) { podcast in
+                    PodcastRow(podcast: podcast)
                 }
             }
             .listStyle(.plain)
-            .navigationTitle("Movies")
-            .searchable(text: $term, prompt: "Search movies")
+            .navigationTitle("Podcasts")
+            .searchable(text: $term, prompt: "Search podcasts")
             .onSubmit(of: .search) { Task { await search() } }
             .overlay { if isLoading { ProgressView() } }
             .task { await search() }
@@ -40,7 +40,7 @@ struct MoviesView: View {
         isLoading = true
         errorMessage = nil
         do {
-            movies = try await api.searchMovies(term: term)
+            podcasts = try await api.searchPodcasts(term: term)
         } catch {
             errorMessage = "Failed to load: \(error.localizedDescription)"
         }

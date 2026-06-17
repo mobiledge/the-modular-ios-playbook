@@ -19,17 +19,39 @@ final class iTunesAPIClient {
         self.decoder = decoder
     }
 
+    /// Decodes the iTunes envelope, skipping any individual result that fails to
+    /// decode rather than failing the whole response. A single search can mix
+    /// result shapes (tracks, collections, bundles), and a model only declares
+    /// the fields it needs. Lossy decoding means one odd element drops out
+    /// instead of emptying the entire list.
     private struct SearchResponse<T: Decodable>: Decodable {
-        let resultCount: Int
         let results: [T]
+
+        private enum CodingKeys: String, CodingKey { case results }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let elements = try container.decode([Failable<T>].self, forKey: .results)
+            results = elements.compactMap(\.value)
+        }
+    }
+
+    /// Turns a per-element decode failure into `nil` so one bad element doesn't
+    /// sink the whole array.
+    private struct Failable<T: Decodable>: Decodable {
+        let value: T?
+
+        init(from decoder: Decoder) throws {
+            value = try? decoder.singleValueContainer().decode(T.self)
+        }
     }
 
     func searchMusic(term: String) async throws -> [Track] {
         try await search(term: term, media: "music", entity: "song")
     }
 
-    func searchMovies(term: String) async throws -> [Movie] {
-        try await search(term: term, media: "movie", entity: "movie")
+    func searchPodcasts(term: String) async throws -> [Podcast] {
+        try await search(term: term, media: "podcast", entity: "podcast")
     }
 
     private func search<T: Decodable>(term: String, media: String, entity: String) async throws -> [T] {

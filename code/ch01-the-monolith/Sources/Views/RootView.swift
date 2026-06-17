@@ -11,8 +11,8 @@ struct RootView: View {
             MusicSearchView()
                 .tabItem { Label("Music", systemImage: "music.note") }
 
-            MoviesView()
-                .tabItem { Label("Movies", systemImage: "film") }
+            PodcastsView()
+                .tabItem { Label("Podcasts", systemImage: "mic") }
         }
         .tint(AppColors.primary)
     }

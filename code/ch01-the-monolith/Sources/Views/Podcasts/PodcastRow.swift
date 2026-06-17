@@ -1,21 +1,21 @@
 import SwiftUI
 
-/// A single row in the movies list. Deliberately parallel to `TrackRow` in the
-/// Music feature: pure presentation of a `Movie`, with nothing to save.
-struct MovieRow: View {
-    let movie: Movie
+/// A single row in the podcasts list. Deliberately parallel to `TrackRow` in the
+/// Music feature: pure presentation of a `Podcast`, with nothing to save.
+struct PodcastRow: View {
+    let podcast: Podcast
 
     var body: some View {
         HStack(spacing: 12) {
-            ArtworkView(url: movie.artworkUrl100)
+            ArtworkView(url: podcast.artworkUrl100)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(movie.trackName).font(.headline).lineLimit(2)
-                Text(movie.artistName)
+                Text(podcast.collectionName).font(.headline).lineLimit(2)
+                Text(podcast.artistName)
                     .font(.subheadline)
                     .foregroundStyle(AppColors.secondaryText)
                     .lineLimit(1)
-                if let releaseDate = movie.releaseDate {
+                if let releaseDate = podcast.releaseDate {
                     Text(releaseDate.mediumString)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
