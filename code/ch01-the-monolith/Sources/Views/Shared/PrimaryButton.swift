@@ -14,17 +14,17 @@ struct PrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack {
+            HStack(spacing: AppSpacing.sm) {
                 if let systemImage {
                     Image(systemName: systemImage)
                 }
-                Text(title).fontWeight(.semibold)
+                Text(title).font(AppFont.callout)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(AppColors.primary)
-            .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(.vertical, AppSpacing.md)
+            .foregroundStyle(AppColors.onBrand)
+            .background(AppColors.brand)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
         }
         .buttonStyle(.plain)
     }

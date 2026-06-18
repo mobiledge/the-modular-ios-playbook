@@ -38,9 +38,14 @@ iTunesSearchApp/
     │   └── iTunesAPIClient.swift
     ├── Views/
     │   ├── RootView.swift           # the TabView that wires the features together
-    │   ├── Shared/
-    │   │   ├── AppColors.swift
+    │   ├── Shared/                  # the design system: tokens + reusable components
+    │   │   ├── AppColors.swift      # semantic color palette (brand, surfaces, text, status)
+    │   │   ├── Typography.swift     # AppFont — a type scale + semantic text styles
+    │   │   ├── Layout.swift         # AppSpacing + AppRadius tokens
+    │   │   ├── AppText.swift        # styled-text component built from the tokens
     │   │   ├── ArtworkView.swift
+    │   │   ├── CardView.swift
+    │   │   ├── TagView.swift
     │   │   └── PrimaryButton.swift
     │   ├── Music/
     │   │   ├── MusicSearchView.swift

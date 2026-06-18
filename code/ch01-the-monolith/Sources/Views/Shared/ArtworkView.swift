@@ -9,10 +9,10 @@ struct ArtworkView: View {
         AsyncImage(url: url) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(AppColors.cardBackground)
+            RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
+                .fill(AppColors.surface)
         }
         .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous))
     }
 }

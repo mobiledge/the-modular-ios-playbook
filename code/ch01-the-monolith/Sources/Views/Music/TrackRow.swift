@@ -9,24 +9,27 @@ struct TrackRow: View {
     let track: Track
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppSpacing.md) {
             ArtworkView(url: track.artworkUrl100)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(track.trackName).font(.headline).lineLimit(1)
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(track.trackName)
+                    .font(AppFont.headline)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
                 Text(track.artistName)
-                    .font(.subheadline)
-                    .foregroundStyle(AppColors.secondaryText)
+                    .font(AppFont.callout)
+                    .foregroundStyle(AppColors.textSecondary)
                     .lineLimit(1)
                 if let releaseDate = track.releaseDate {
                     Text(releaseDate.mediumString)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: AppSpacing.sm)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, AppSpacing.xs)
     }
 }

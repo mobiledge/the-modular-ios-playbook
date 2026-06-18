@@ -6,24 +6,27 @@ struct PodcastRow: View {
     let podcast: Podcast
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppSpacing.md) {
             ArtworkView(url: podcast.artworkUrl100)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(podcast.collectionName).font(.headline).lineLimit(2)
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(podcast.collectionName)
+                    .font(AppFont.headline)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(2)
                 Text(podcast.artistName)
-                    .font(.subheadline)
-                    .foregroundStyle(AppColors.secondaryText)
+                    .font(AppFont.callout)
+                    .foregroundStyle(AppColors.textSecondary)
                     .lineLimit(1)
                 if let releaseDate = podcast.releaseDate {
                     Text(releaseDate.mediumString)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColors.textTertiary)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: AppSpacing.sm)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, AppSpacing.xs)
     }
 }

@@ -39,7 +39,7 @@ app lifecycle throughout:
 | `App/iTunesSearchApp.swift`, `Views/RootView.swift` | same | SwiftUI `@main App` + a `TabView` root |
 | `Models/Track,Podcast` | `Models/` | iTunes API response types |
 | `Networking/iTunesAPIClient` | `Networking/` | `async`/`await` URLSession client; URLs built inline |
-| `Views/Shared/AppColors,ArtworkView,PrimaryButton` | `Views/Shared/` | the shared UI extracted in Chapter 2 |
+| `Views/Shared/*` — the design system | `Views/Shared/` | tokens (`AppColors`, `AppFont`, `AppSpacing`/`AppRadius`) + components (`AppText`, `PrimaryButton`, `CardView`, `TagView`, `ArtworkView`); extracted in Chapter 2 |
 | `Views/Music/MusicSearchView,TrackRow` | same | search + list of music tracks |
 | `Views/Podcasts/PodcastsView,PodcastRow` | same | search + list of podcasts (mirrors Music) |
 | `Utilities/DateFormatter+Extensions,Logger` | `Utilities/` | |
