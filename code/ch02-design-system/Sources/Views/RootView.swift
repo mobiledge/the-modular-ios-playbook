@@ -1,25 +1,20 @@
 import SwiftUI
 import DesignSystem
 
-/// The app's root tab bar, wiring together the four core features.
+/// The app's root tab bar, wiring together the two core features.
 ///
-/// In the UIKit world this composition lived in the SceneDelegate; here it is
-/// a SwiftUI `TabView`. Note how the root knows about every feature directly —
-/// another hallmark of the monolith we'll untangle in the Composition Root chapter.
+/// With the SwiftUI app lifecycle this composition lives here in a `TabView`
+/// (in the UIKit world it would have lived in the `SceneDelegate`). Note how the
+/// root knows about every feature directly — another hallmark of the monolith
+/// we'll untangle in the Composition Root chapter.
 struct RootView: View {
     var body: some View {
         TabView {
             MusicSearchView()
                 .tabItem { Label("Music", systemImage: "music.note") }
 
-            MoviesView()
-                .tabItem { Label("Movies", systemImage: "film") }
-
-            AudiobooksView()
-                .tabItem { Label("Audiobooks", systemImage: "headphones") }
-
-            LibraryView()
-                .tabItem { Label("Library", systemImage: "books.vertical") }
+            PodcastsView()
+                .tabItem { Label("Podcasts", systemImage: "mic") }
         }
         .tint(DSColors.brand)
     }

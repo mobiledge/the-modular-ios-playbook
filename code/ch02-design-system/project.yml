@@ -1,13 +1,14 @@
-# XcodeGen project specification for the Chapter 1 monolith.
+# XcodeGen project specification for the Chapter 2 end-state.
 #
 # Generate the .xcodeproj with:
 #     brew install xcodegen   # one time
-#     cd code/iTunesSearchApp
+#     cd code/ch02-design-system
 #     xcodegen generate
 #     open iTunesSearchApp.xcodeproj
 #
-# Everything lives in ONE application target. That is the whole point of
-# Chapter 1: the monolith. Later chapters break this single target apart.
+# This is the Chapter 1 monolith with the design system extracted into a local
+# Swift package (Packages/DesignSystem). There are now two app targets: the main
+# app, and a standalone Catalog that imports only the design system.
 
 name: iTunesSearchApp
 

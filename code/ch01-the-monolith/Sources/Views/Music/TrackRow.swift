@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A single row in the music list (the SwiftUI equivalent of `TrackCell`).
+/// A single row in the music list.
 ///
 /// The row is pure presentation: it takes a `Track` and draws it. There is no
 /// persistence and nothing to toggle — the app simply shows what the network

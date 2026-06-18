@@ -31,17 +31,17 @@ Music and Podcasts — that fetches live results and lists them.
 
 ## How the code maps to the chapter's anatomy
 
-The chapter shows a UIKit folder tree. This implementation uses the SwiftUI app
-lifecycle, so a couple of files are renamed but the structure is the same:
+The chapter's folder tree matches this project one-to-one — it uses the SwiftUI
+app lifecycle throughout:
 
 | Chapter anatomy | This project | Notes |
 |---|---|---|
-| `AppDelegate` / `SceneDelegate` | `App/iTunesSearchApp.swift`, `Views/RootView.swift` | SwiftUI `App` + `TabView` replace the UIKit lifecycle |
+| `App/iTunesSearchApp.swift`, `Views/RootView.swift` | same | SwiftUI `@main App` + a `TabView` root |
 | `Models/Track,Podcast` | `Models/` | iTunes API response types |
-| `Networking/iTunesAPIClient,Endpoint` | `Networking/` | `Endpoint` enum builds URLs; client runs the request |
-| `Views/Shared/PrimaryButton,AppColors` | `Views/Shared/` | plus a small `ArtworkView` helper |
-| `Views/Music/...ViewController,TrackCell` | `Views/Music/MusicSearchView.swift`, `TrackRow.swift` | search + list |
-| `Views/Podcasts/...ViewController,PodcastCell` | `Views/Podcasts/PodcastsView.swift`, `PodcastRow.swift` | search + list (mirrors Music) |
+| `Networking/iTunesAPIClient` | `Networking/` | `async`/`await` URLSession client; URLs built inline |
+| `Views/Shared/AppColors,ArtworkView,PrimaryButton` | `Views/Shared/` | the shared UI extracted in Chapter 2 |
+| `Views/Music/MusicSearchView,TrackRow` | same | search + list of music tracks |
+| `Views/Podcasts/PodcastsView,PodcastRow` | same | search + list of podcasts (mirrors Music) |
 | `Utilities/DateFormatter+Extensions,Logger` | `Utilities/` | |
 
 ## Where the monolith hurts (on purpose)

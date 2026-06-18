@@ -45,7 +45,7 @@ That transparency is the headline win, and it lands immediately — you get it t
 
 ## Why the Design System Goes First
 
-In [Chapter 1]({{< relref "01-the-monolith" >}}), we explored the pains of maintaining our growing monolith, **iTunesSearchApp**. The first step to unknotting this spaghetti is *not* to extract a massive feature like the "Library" right away. That usually leads to frustration because features are heavily intertwined with other parts of the app.
+In [Chapter 1]({{< relref "01-the-monolith" >}}), we explored the pains of maintaining our growing monolith, **iTunesSearchApp**. The first step to unknotting this spaghetti is *not* to extract a whole feature like Music search right away. That usually leads to frustration because features are heavily intertwined with other parts of the app — networking, models, and shared UI all at once.
 
 Instead, we start from the bottom up by identifying code that has **many incoming dependencies, but few outgoing dependencies**. In almost every app, the most prominent example of this is the **Design System** — almost every screen depends on it, while it depends on little more than Apple's UI frameworks. That property is exactly what makes it safe to pull out first, and what lets the catalog app Maya and Sam need exist at all: a module you can render on its own, independent of the app's business logic or network states.
 
@@ -64,10 +64,10 @@ iTunesSearchApp/
 ```
 
 Files like `AppColors.swift` and `PrimaryButton.swift` are used by almost every screen in the application.
-- `MusicSearchViewController` uses `AppColors`.
-- `LibraryViewController` uses `PrimaryButton`.
+- `MusicSearchView` uses `AppColors`.
+- `PodcastsView` reuses the same shared controls and colors.
 
-Crucially, what do these files depend on? Usually, only Apple's UI frameworks (UIKit or SwiftUI). They don't depend on `Track`, `Movie`, or any networking code. This makes them the perfect candidates for our first extraction.
+Crucially, what do these files depend on? Usually, only Apple's UI frameworks (SwiftUI here, or UIKit). They don't depend on `Track`, `Podcast`, or any networking code. This makes them the perfect candidates for our first extraction.
 
 ## Step 1: Extracting the Design System
 
@@ -75,11 +75,11 @@ We will extract our UI components into a new `DesignSystem` module.
 
 1.  **Create the Module:** Depending on your setup (Xcode Workspaces, Swift Package Manager, Tuist), create a new target or package named `DesignSystem`.
 2.  **Move the Code:** Move files like `PrimaryButton.swift`, `AppColors.swift`, and other shared typography or icon assets out of the main `iTunesSearchApp` target and into `DesignSystem`.
-3.  **Adjust Access Control:** Inside the main app, these components were implicitly `internal`. In a separate module, we must make the classes, structs, and their initializers `public` so `iTunesSearchApp` can use them.
+3.  **Adjust Access Control:** Inside the main app, these components were implicitly `internal`. In a separate module, we must make the types and their initializers `public` so `iTunesSearchApp` can use them. While we're at it we give them a `DS` prefix, so `AppColors` becomes `DSColors`:
     ```swift
     // In DesignSystem module
-    public struct AppColors {
-        public static let primaryAction = Color("BrandBlue")
+    public enum DSColors {
+        public static let brand = Color(red: 0.92, green: 0.18, blue: 0.36)
     }
     ```
 4.  **Import:** In `iTunesSearchApp`, add `import DesignSystem` at the top of any file that uses these UI components.
@@ -111,7 +111,7 @@ With this extraction, we start seeing immediate benefits:
 
 1.  **The Catalog App:** As discussed, we can now build a lightweight app target that solely imports `DesignSystem` to showcase our components, bridging the gap between design and engineering.
 2.  **Faster UI Iteration:** If a developer is working purely on tweaking a button style, they can compile just the `DesignSystem` module and its catalog app, completely bypassing the compilation of the massive `iTunesSearchApp` target.
-3.  **Clearer Boundaries:** It is now architecturally impossible for `AppColors.swift` to accidentally import or use a domain model like `Track.swift`. The compiler will throw an error, protecting our foundation.
+3.  **Clearer Boundaries:** It is now architecturally impossible for `DSColors.swift` to accidentally import or use a domain model like `Track.swift`. The compiler will throw an error, protecting our foundation.
 
 ## Hands-On: Extract the DesignSystem
 
@@ -122,7 +122,7 @@ The [`code/ch02-design-system`](https://github.com/mobiledge/the-modular-ios-pla
 A design system is more than a color palette. Ours is built in layers:
 
 *   **Tokens** — the primitives. `DSColors` is a small semantic palette (brand, surfaces, text, status). `DSFont` defines a single font *design*, a fixed type *scale*, and a set of weights, then composes them into semantic styles (`largeTitle`, `headline`, `body`, …). `DSSpacing` and `DSRadius` give a consistent rhythm.
-*   **Components** — built *by composing tokens*. `DSText` pairs a font with a default color. `DSButton`, `DSCard`, and `DSTag` combine color, type, and radius. The highest-level component, `DSMediaRow`, is assembled entirely from `DSArtwork` + `DSText` + spacing — so every media list in the app (Music, Audiobooks, Library) looks identical for free.
+*   **Components** — built *by composing tokens*. `DSText` pairs a font with a default color. `DSButton`, `DSCard`, and `DSTag` combine color, type, and radius. The highest-level component, `DSMediaRow`, is assembled entirely from `DSArtwork` + `DSText` + spacing — so every media list in the app (Music, Podcasts) looks identical for free.
 
 Because everything is composed from a handful of tokens, the entire app can be re-themed by editing one or two files.
 
@@ -147,7 +147,7 @@ Three things made this work, exactly as outlined above:
 2.  Their types became `public` (along with their initializers), since the app now consumes them across a module boundary.
 3.  Every feature file that uses them now starts with `import DesignSystem`.
 
-The compiler now *enforces* the boundary: it is impossible for a design-system component to reach back into `Track`, `iTunesAPIClient`, or `CoreDataManager`.
+The compiler now *enforces* the boundary: it is impossible for a design-system component to reach back into `Track`, `Podcast`, or `iTunesAPIClient`.
 
 ### The payoff: a Catalog app
 

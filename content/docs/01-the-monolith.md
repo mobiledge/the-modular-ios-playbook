@@ -27,32 +27,33 @@ If we look at the Xcode project structure for our initial monolithic iTunesSearc
 
 ```text
 iTunesSearchApp/
-├── iTunesSearchApp.xcodeproj
-└── iTunesSearchApp/
-    ├── AppDelegate.swift
-    ├── SceneDelegate.swift
+├── project.yml                     # XcodeGen spec; the .xcodeproj is generated
+└── Sources/
+    ├── App/
+    │   └── iTunesSearchApp.swift    # SwiftUI @main App entry point
     ├── Models/
     │   ├── Track.swift
     │   └── Podcast.swift
     ├── Networking/
-    │   ├── iTunesAPIClient.swift
-    │   └── Endpoint.swift
+    │   └── iTunesAPIClient.swift
     ├── Views/
+    │   ├── RootView.swift           # the TabView that wires the features together
     │   ├── Shared/
-    │   │   ├── PrimaryButton.swift
-    │   │   └── AppColors.swift
+    │   │   ├── AppColors.swift
+    │   │   ├── ArtworkView.swift
+    │   │   └── PrimaryButton.swift
     │   ├── Music/
-    │   │   ├── MusicSearchViewController.swift
-    │   │   └── TrackCell.swift
+    │   │   ├── MusicSearchView.swift
+    │   │   └── TrackRow.swift
     │   └── Podcasts/
-    │       ├── PodcastsViewController.swift
-    │       └── PodcastCell.swift
+    │       ├── PodcastsView.swift
+    │       └── PodcastRow.swift
     └── Utilities/
         ├── DateFormatter+Extensions.swift
         └── Logger.swift
 ```
 
-Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchViewController` can directly instantiate `iTunesAPIClient`, which can freely reach for shared globals like `Logger` and `AppColors`. Nothing in the compiler stops any file from touching any other.
+The app uses the SwiftUI app lifecycle: a single `@main App` struct and a `RootView` `TabView` stand in for the classic UIKit `AppDelegate` + `SceneDelegate` pair. Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchView` can directly instantiate `iTunesAPIClient`, which can freely reach for shared globals like `Logger` and `AppColors`. Nothing in the compiler stops any file from touching any other.
 
 ## The Breaking Point
 
@@ -62,7 +63,7 @@ Here are the typical problems teams face when scaling a monolith:
 
 1.  **Slow Build Times:** Every time you make a change to a single view, Xcode might need to recompile a significant portion of the entire application. Waiting for 3-5 minutes just to see a color change becomes normal.
 2.  **Merge Conflicts:** With 20 developers working in the same target, editing the same `iTunesAPIClient.swift` or `AppColors.swift`, Git merge conflicts become a daily, painful occurrence.
-3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `MusicSearchViewController` might directly reach into the `Podcasts` feature's code, creating hidden dependencies. Folders are only a suggestion — nothing *stops* this. Over time, every part of the app can touch every other part, and the structure you see in the file tree no longer reflects how the code actually connects. When something breaks, there is no longer an obvious place to look.
+3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `MusicSearchView` might directly reach into the `Podcasts` feature's code, creating hidden dependencies. Folders are only a suggestion — nothing *stops* this. Over time, every part of the app can touch every other part, and the structure you see in the file tree no longer reflects how the code actually connects. When something breaks, there is no longer an obvious place to look.
 4.  **Difficult to Test:** Testing the `MusicSearch` means you have to compile the entire app, including the `Podcasts` feature, even though it isn't relevant to the test.
 5.  **Scaling Teams:** It becomes difficult to assign ownership. If a bug occurs in the network layer, who owns it? If team A is working on Music and Team B is working on Podcasts, they are constantly stepping on each other's toes.
 6.  **Design and Code Drift Apart:** Designers maintain a source of truth in their design tool; developers maintain another in code. With no shared, rendered reference between them, nobody can point at one authoritative thing and agree "this is the real component, this is its real radius and color." Every visual discrepancy becomes a manual investigation — *is that value final? did it ship? is it hardcoded somewhere?* — and drift is usually caught by accident, sprints later, in a random build.

@@ -1,8 +1,9 @@
 # iTunesSearchApp — Playbook Sample Project
 
 A fully working iOS app that we refactor chapter by chapter. It searches the
-public **iTunes Search API** (no API key needed) for music, movies, and
-audiobooks, and lets you save items to a local **Core Data** library.
+public **iTunes Search API** (no API key needed) for **music** and **podcasts**
+and presents the results in a list. There is no local database — the app simply
+shows what the API returns.
 
 The git history tracks the playbook:
 
@@ -11,6 +12,10 @@ The git history tracks the playbook:
 - **Chapter 2 — Extracting the Design System:** the shared UI is pulled into a
   local Swift package, `Packages/DesignSystem`, and a standalone **Catalog**
   app target is added. See [`content/docs/02-extracting-design-system.md`](../../content/docs/02-extracting-design-system.md).
+
+This project is the Chapter 1 monolith with the design system extracted — diff
+it against [`../ch01-the-monolith`](../ch01-the-monolith) to see exactly what
+this chapter changes.
 
 ## Run it
 
@@ -43,20 +48,16 @@ The app and the catalog both depend on it; it depends on nothing but SwiftUI.
 
 ## How the code maps to the chapter's anatomy
 
-The chapter shows a UIKit folder tree. This implementation uses the SwiftUI app
-lifecycle, so a couple of files are renamed but the structure is the same:
+The chapter shows the same SwiftUI structure as the code:
 
 | Chapter anatomy | This project | Notes |
 |---|---|---|
-| `AppDelegate` / `SceneDelegate` | `App/iTunesSearchApp.swift`, `Views/RootView.swift` | SwiftUI `App` + `TabView` replace the UIKit lifecycle |
-| `Models/Track,Movie,Audiobook` | `Models/` | iTunes API response types |
-| `Networking/iTunesAPIClient,Endpoints` | `Networking/` | `async`/`await` URLSession client |
-| `Database/CoreDataManager` | `Database/CoreDataManager.swift` | Core Data with a programmatic model (no `.xcdatamodeld`) |
+| `App/iTunesSearchApp.swift`, `Views/RootView.swift` | same | SwiftUI `App` + `TabView` entry point |
+| `Models/Track,Podcast` | `Models/` | iTunes API response types |
+| `Networking/iTunesAPIClient` | `Networking/` | `async`/`await` URLSession client |
 | `Views/Shared/PrimaryButton,AppColors` | `Packages/DesignSystem/` | extracted into a Swift package in Chapter 2 (`DSButton`, `DSColors`, …) |
-| `Views/MusicSearch/...ViewController,TrackCell` | `Views/MusicSearch/MusicSearchView.swift`, `TrackRow.swift` | |
-| `Views/MovieDetail/...ViewController` | `Views/MovieDetail/MoviesView.swift`, `MovieDetailView.swift` | |
-| `Views/Audiobooks/...ViewController` | `Views/Audiobooks/AudiobooksView.swift` | |
-| `Views/Library/...ViewController` | `Views/Library/LibraryView.swift` | |
+| `Views/Music/MusicSearchView,TrackRow` | same | search + list of music tracks |
+| `Views/Podcasts/PodcastsView,PodcastRow` | same | search + list of podcasts |
 | `Utilities/DateFormatter+Extensions,Logger` | `Utilities/` | |
 
 ## Where the monolith hurts (on purpose)
@@ -66,16 +67,15 @@ fix. Search the sources for `MONOLITH NOTE` to find each spot:
 
 - **Feature views instantiate `iTunesAPIClient.shared` directly** — no protocol,
   no injection. The Music feature can't compile or be tested without networking.
-- **List rows reach straight into `CoreDataManager.shared`** — UI is welded to
-  the database.
 - **`RootView` knows about every feature** — there's no composition root.
-- **`AppColors` / `Logger` are global** — convenient now, a placement problem
-  once we split into modules.
+- **`Logger` is global** — convenient now, a placement problem once we split
+  into modules.
 
-Each of these is addressed in a later chapter:
+The design coupling (`AppColors`, shared UI) is the one this chapter removes by
+extracting `DesignSystem`. The rest are addressed in later chapters:
 
-1. Ch.2 — extract `AppColors` / `PrimaryButton` into a Design System module.
-2. Ch.3 — extract the Domain models and the Database/Networking infrastructure.
-3. Ch.4 — slice Music / Movies / Audiobooks / Library into feature modules.
+1. Ch.2 — extract the shared UI (`AppColors` / `PrimaryButton`) into a Design System module.
+2. Ch.3 — extract the Domain models and the Networking infrastructure.
+3. Ch.4 — slice Music / Podcasts into feature modules.
 4. Ch.5 — invert dependencies behind protocols.
 5. Ch.6 — assemble everything in a Composition Root.
