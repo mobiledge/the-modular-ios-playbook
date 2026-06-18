@@ -6,14 +6,18 @@ Throughout this playbook, we follow the journey of a fictional application, **iT
 
 This playbook demonstrates how to solve the real scaling challenges of iOS development: slow build times, frequent merge conflicts, and "spaghetti" coupling.
 
+📖 **Read it online: [The Modular iOS Playbook](https://mobiledge.github.io/the-modular-ios-playbook/)**
+
 ---
 
 ## Table of Contents
 
-1. [Chapter 1: The Monolith (The Starting Point)](chapters/01-the-monolith.md)
-2. [Chapter 2: Extracting the Design System](chapters/02-extracting-design-system.md)
-3. [Chapter 3: Domain and Infrastructure Layers](chapters/03-domain-and-infrastructure.md)
-4. [Chapter 4: Vertical Slicing (Feature Modules)](chapters/04-vertical-slicing.md)
-5. [Chapter 5: Dependency Inversion & Interfaces](chapters/05-dependency-inversion.md)
-6. [Chapter 6: The Composition Root](chapters/06-composition-root.md)
-7. [Chapter 7: Advanced Granularity & Micro-Features](chapters/07-advanced-granularity.md)
+1. [Chapter 1: The Monolith (The Starting Point)](https://mobiledge.github.io/the-modular-ios-playbook/docs/01-the-monolith/)
+2. [Chapter 2: Extracting the Design System](https://mobiledge.github.io/the-modular-ios-playbook/docs/02-extracting-design-system/)
+3. [Chapter 3: Domain and Infrastructure Layers](https://mobiledge.github.io/the-modular-ios-playbook/docs/03-domain-and-infrastructure/)
+4. [Chapter 4: Vertical Slicing (Feature Modules)](https://mobiledge.github.io/the-modular-ios-playbook/docs/04-vertical-slicing/)
+5. [Chapter 5: Dependency Inversion & Interfaces](https://mobiledge.github.io/the-modular-ios-playbook/docs/05-dependency-inversion/)
+6. [Chapter 6: The Composition Root](https://mobiledge.github.io/the-modular-ios-playbook/docs/06-composition-root/)
+7. [Chapter 7: Advanced Granularity & Micro-Features](https://mobiledge.github.io/the-modular-ios-playbook/docs/07-advanced-granularity/)
+
+> The chapter source lives in [`content/docs/`](content/docs/) and is published with [Hugo](https://gohugo.io/) via GitHub Pages.

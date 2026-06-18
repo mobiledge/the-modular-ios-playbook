@@ -3,7 +3,7 @@
 **To:** Rabin (author)
 **Re:** Whole-book review, focused on pedagogy
 **Date:** June 17, 2026
-**Scope reviewed:** All 7 chapters (`chapters/`, mirrored in `content/docs/`), the per-chapter runnable code under `code/`, and the chapter READMEs.
+**Scope reviewed:** All 7 chapters (`content/docs/`), the per-chapter runnable code under `code/`, and the chapter READMEs.
 
 ---
 
