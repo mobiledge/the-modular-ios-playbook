@@ -10,7 +10,7 @@ struct ArtworkView: View {
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
             RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)
-                .fill(AppColors.surface)
+                .fill(AppColor.surface)
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous))

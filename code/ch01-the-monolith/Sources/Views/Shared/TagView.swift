@@ -7,7 +7,7 @@ struct TagView: View {
     private let text: String
     private let color: Color
 
-    init(_ text: String, color: Color = AppColors.brand) {
+    init(_ text: String, color: Color = AppColor.brand) {
         self.text = text
         self.color = color
     }

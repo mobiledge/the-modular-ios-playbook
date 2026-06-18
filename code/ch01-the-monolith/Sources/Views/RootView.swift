@@ -14,7 +14,7 @@ struct RootView: View {
             PodcastsView()
                 .tabItem { Label("Podcasts", systemImage: "mic") }
         }
-        .tint(AppColors.brand)
+        .tint(AppColor.brand)
     }
 }
 

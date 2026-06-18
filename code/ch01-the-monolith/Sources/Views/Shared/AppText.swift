@@ -41,11 +41,11 @@ struct AppText: View {
     private var defaultColor: Color {
         switch style {
         case .largeTitle, .title, .headline, .body:
-            return AppColors.textPrimary
+            return AppColor.textPrimary
         case .callout:
-            return AppColors.textSecondary
+            return AppColor.textSecondary
         case .caption:
-            return AppColors.textTertiary
+            return AppColor.textTertiary
         }
     }
 }

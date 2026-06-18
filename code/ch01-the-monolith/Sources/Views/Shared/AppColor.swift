@@ -12,7 +12,7 @@ import SwiftUI
 /// any view can use it freely — but there is also nothing stopping unrelated
 /// code from depending on it. Chapter 2 extracts these into a Design System
 /// module and renames `AppColors` to `DSColors`.
-enum AppColors {
+enum AppColor {
 
     // MARK: Brand
 

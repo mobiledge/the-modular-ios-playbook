@@ -22,8 +22,8 @@ struct PrimaryButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.md)
-            .foregroundStyle(AppColors.onBrand)
-            .background(AppColors.brand)
+            .foregroundStyle(AppColor.onBrand)
+            .background(AppColor.brand)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
         }
         .buttonStyle(.plain)

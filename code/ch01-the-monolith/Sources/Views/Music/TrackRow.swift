@@ -15,16 +15,16 @@ struct TrackRow: View {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(track.trackName)
                     .font(AppFont.headline)
-                    .foregroundStyle(AppColors.textPrimary)
+                    .foregroundStyle(AppColor.textPrimary)
                     .lineLimit(1)
                 Text(track.artistName)
                     .font(AppFont.callout)
-                    .foregroundStyle(AppColors.textSecondary)
+                    .foregroundStyle(AppColor.textSecondary)
                     .lineLimit(1)
                 if let releaseDate = track.releaseDate {
                     Text(releaseDate.mediumString)
                         .font(AppFont.caption)
-                        .foregroundStyle(AppColors.textTertiary)
+                        .foregroundStyle(AppColor.textTertiary)
                 }
             }
 

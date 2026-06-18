@@ -14,7 +14,7 @@ struct CardView<Content: View>: View {
         content
             .padding(AppSpacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppColors.surface)
+            .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
     }
 }
