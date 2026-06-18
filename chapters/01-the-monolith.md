@@ -62,6 +62,7 @@ Here are the typical problems teams face when scaling a monolith:
 3.  **Tight Coupling (The "Spaghetti" Problem):** Because there are no boundaries enforced by the compiler, it's easy for developers to take shortcuts. The `MusicSearchViewController` might directly reach into the `Podcasts` feature's code, creating hidden dependencies. Folders are only a suggestion — nothing *stops* this. Over time, every part of the app can touch every other part, and the structure you see in the file tree no longer reflects how the code actually connects. When something breaks, there is no longer an obvious place to look.
 4.  **Difficult to Test:** Testing the `MusicSearch` means you have to compile the entire app, including the `Podcasts` feature, even though it isn't relevant to the test.
 5.  **Scaling Teams:** It becomes difficult to assign ownership. If a bug occurs in the network layer, who owns it? If team A is working on Music and Team B is working on Podcasts, they are constantly stepping on each other's toes.
+6.  **Design and Code Drift Apart:** Designers maintain a source of truth in their design tool; developers maintain another in code. With no shared, rendered reference between them, nobody can point at one authoritative thing and agree "this is the real component, this is its real radius and color." Every visual discrepancy becomes a manual investigation — *is that value final? did it ship? is it hardcoded somewhere?* — and drift is usually caught by accident, sprints later, in a random build.
 
 ## The Goal of Modularization
 
@@ -105,7 +106,7 @@ Before we change a single line, let's write down what the monolith actually cost
 
 ## The First Pain We'll Attack
 
-We won't try to boil the ocean. In the next chapter we take the first, safest step: extract the one thing nearly every screen already depends on — the **design system** — and turn our first pain, *slow UI iteration*, into our first measurable win.
+We won't try to boil the ocean. In the next chapter we take the first, safest step: extract the one thing nearly every screen already depends on — the **design system**. Its standout payoff is *closing the gap between design and code*: once the design system is its own module, we can render it on its own as a live catalog, giving design and engineering the single source of truth they were missing. Faster UI iteration comes along for the ride — and gives us our first number to knock down on the scoreboard.
 
 ---
 

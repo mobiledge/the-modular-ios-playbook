@@ -110,17 +110,18 @@ With this extraction, we start seeing immediate benefits:
 2.  **Faster UI Iteration:** If a developer is working purely on tweaking a button style, they can compile just the `DesignSystem` module and its catalog app, completely bypassing the compilation of the massive `iTunesSearchApp` target.
 3.  **Clearer Boundaries:** It is now architecturally impossible for `AppColors.swift` to accidentally import or use a domain model like `Track.swift`. The compiler will throw an error, protecting our foundation.
 
-## Checkpoint: Slow UI Iteration, Relieved
+## Checkpoint: One Source of Truth
 
-You can now change a brand color or a button style and see it in a standalone **Catalog app** in seconds — without compiling `iTunesSearchApp` at all.
+Maya and Sam now have the thing they were missing: a standalone **Catalog app** that renders every primitive and component straight from the shipping code. When a value looks wrong, the gap between design and code is visible in one place — and the fix is a one-line token change that updates every component at once. Faster iteration follows: a color or radius tweak shows up in seconds, without compiling `iTunesSearchApp` at all.
 
 | What you do | Monolith (Ch1 baseline) | After this chapter |
 | --- | --- | --- |
-| Change a color and see it | ~40s — app target recompiles | ~5s — Catalog app only |
+| Confirm a component's *real* radius/color | Read code or hunt through app screens | Open Catalog — rendered from shipping code |
 | Review every component | Click through real app screens | Launch Catalog, all in isolation |
+| Change a color and see it | ~40s — app target recompiles | ~5s — Catalog app only |
 | Misuse a domain model in UI | Compiles fine, breaks later | Won't compile — boundary enforced |
 
-*Illustrative figures; measure your own in `code/ch02-design-system`. The shift from ~40s to ~5s is the whole point.*
+*Illustrative figures; measure your own in `code/ch02-design-system`. The headline win is the shared, authoritative reference — the ~40s → ~5s loop is what keeps it honest.*
 
 ## The Next Crack: a Tangled Data Layer
 
