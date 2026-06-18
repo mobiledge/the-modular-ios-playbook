@@ -1,5 +1,7 @@
 # Chapter 3: Domain and Infrastructure Layers
 
+**The pain this chapter attacks: business logic you can't test without the whole world.** Today, validating a search query or a "save to library" rule means compiling the network stack, the database, and the UI — a minute-plus per run — and swapping a data source touches code everywhere. By the end of this chapter, the core rules run in milliseconds against a mock, and the outside world is swappable.
+
 In the previous chapter, we established our foundational UI building blocks by extracting the `DesignSystem`. 
 
 Now, we must address the core logic and side-effects of our application. In our iTunesSearchApp monolith, the network clients, the data models (`Track`, `Movie`), the database managers, and third-party services are all entangled with UI components and ViewModels. 
@@ -69,7 +71,21 @@ By applying Uncle Bob's Clean Architecture concepts, we gain massive advantages:
 1.  **Testability:** Because the Domain layer has no external dependencies, we can write blazing-fast unit tests for our core business logic without ever making a network request or writing to a disk. We simply pass in mock implementations of our Infrastructure protocols.
 2.  **Flexibility:** Want to swap out your third-party analytics provider? Or move from CoreData to Realm? You only need to change the `Infrastructure` module. The `Domain` layer and the `iTunesSearchApp` remain completely unaffected.
 
-Our core business logic is now safe and isolated. But the UI and features in `iTunesSearchApp` are still a massive, tangled web of screens. In the next chapter, we will introduce "Vertical Slicing" to break apart the features themselves.
+## Checkpoint: Untestable Logic, Relieved
+
+You can now run your core business-logic tests in milliseconds — no network, no database, no app target — and swap a data source by touching only `Infrastructure`.
+
+| What you do | Monolith (Ch1 baseline) | After this chapter |
+| --- | --- | --- |
+| Run the business-logic tests | Compile whole app first, ~1m+ | `Domain` tests, ~0.3s, no I/O |
+| Swap CoreData → Realm (or analytics vendor) | Ripples through app + UI | Touches `Infrastructure` only |
+| Reach the network from a domain rule | Easy — nothing stops it | Won't compile — `Domain` imports nothing |
+
+*Illustrative figures; measure your own in `code/ch03-domain-infrastructure`. A sub-second domain test suite is the headline.*
+
+## The Next Crack: One Giant Feature Bucket
+
+Our core business logic is now safe and isolated. But the UI and features in `iTunesSearchApp` are still a massive, tangled web of screens in a single target — Team A and Team B still edit the same files, and feature work still triggers slow, app-wide builds. In the next chapter, we introduce **Vertical Slicing** to break apart the features themselves.
 
 ---
 

@@ -1,5 +1,7 @@
 # Chapter 2: Extracting the Design System
 
+**The pain this chapter attacks: slow UI iteration.** In the monolith, tweaking a button's corner radius or a brand color means recompiling the whole app target — ~40s a cycle — and designers can only review components by clicking through real, network-backed screens. By the end of this chapter, a UI change will be a five-second loop in a standalone catalog.
+
 In [Chapter 1](./01-the-monolith.md), we explored the pains of maintaining our growing monolith, **iTunesSearchApp**. The first step to unknotting this spaghetti is not to extract a massive feature like the "Library" right away. That usually leads to frustration because features are heavily intertwined with other parts of the app.
 
 Instead, we start from the bottom up by identifying code that has **many incoming dependencies, but few outgoing dependencies**. In almost every app, the most prominent example of this is the **Design System**.
@@ -76,7 +78,21 @@ With this extraction, we start seeing immediate benefits:
 2.  **Faster UI Iteration:** If a developer is working purely on tweaking a button style, they can compile just the `DesignSystem` module and its catalog app, completely bypassing the compilation of the massive `iTunesSearchApp` target.
 3.  **Clearer Boundaries:** It is now architecturally impossible for `AppColors.swift` to accidentally import or use a domain model like `Track.swift`. The compiler will throw an error, protecting our foundation.
 
-We have established a solid foundation. In the next chapter, we will tackle the core of our business logic: the data layer.
+## Checkpoint: Slow UI Iteration, Relieved
+
+You can now change a brand color or a button style and see it in a standalone **Catalog app** in seconds — without compiling `iTunesSearchApp` at all.
+
+| What you do | Monolith (Ch1 baseline) | After this chapter |
+| --- | --- | --- |
+| Change a color and see it | ~40s — app target recompiles | ~5s — Catalog app only |
+| Review every component | Click through real app screens | Launch Catalog, all in isolation |
+| Misuse a domain model in UI | Compiles fine, breaks later | Won't compile — boundary enforced |
+
+*Illustrative figures; measure your own in `code/ch02-design-system`. The shift from ~40s to ~5s is the whole point.*
+
+## The Next Crack: a Tangled Data Layer
+
+The design system was the safe first win — many screens depend on it, it depends on almost nothing. But the *core* of the app is still knotted: models, networking, and the database all live in the app target, entangled with UI and view models. You still can't test a single business rule without building everything. In the next chapter we untangle that with a **Domain** and **Infrastructure** layer.
 
 ---
 

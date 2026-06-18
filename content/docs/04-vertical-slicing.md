@@ -3,6 +3,8 @@ title: "Chapter 4: Vertical Slicing (Feature Modules)"
 weight: 4
 ---
 
+**The pain this chapter attacks: teams stepping on each other.** Every feature still lives in one app target, so two teams edit the same files, fight the same merge conflicts, and wait on the same multi-minute build to try a one-feature change. By the end of this chapter, a feature builds and runs on its own, and two teams can ship in parallel without touching the same target.
+
 We have successfully extracted our horizontal layers: `CoreUtilities`, `DesignSystem`, and `CoreDataLayer`. However, if you look at the `iTunesSearchApp` main target, it is still massive. It contains the views, view models, and controllers for every single feature: Music Search, Movie Details, and Audiobooks.
 
 This is where horizontal layering fails to scale. If Team A works on Music Search and Team B works on Audiobooks, they are still editing the same target, dealing with the same slow build times, and facing the same merge conflicts.
@@ -71,6 +73,18 @@ Our architecture now looks significantly better:
 ```
 
 *Note: Lines showing dependencies to Core Utilities are omitted for clarity, but they still exist.*
+
+## Checkpoint: Team Collisions, Relieved
+
+You can now build and run `FeatureLibrary` on its own via a tiny demo app, and two teams can work on two features without ever editing the same target.
+
+| What you do | Monolith (Ch1 baseline) | After this chapter |
+| --- | --- | --- |
+| Build/iterate one feature | ~3m — the whole app | ~10s — `FeatureLibraryDemo` only |
+| Team A + Team B on two features | Same target → merge conflicts | Separate packages → ~0 conflicts |
+| Find where a feature's code lives | Scattered by technical layer | One package per feature |
+
+*Illustrative figures; measure your own in [`code/ch04-vertical-slicing`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch04-vertical-slicing). The ~3m → ~10s feature loop is the win.*
 
 ## The Hidden Trap: Feature-to-Feature Coupling
 

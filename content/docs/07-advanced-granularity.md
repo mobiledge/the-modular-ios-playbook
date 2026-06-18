@@ -3,6 +3,8 @@ title: "Chapter 7: Advanced Granularity & Micro-Features"
 weight: 7
 ---
 
+**The pain this chapter attacks: a feature module that has itself become a monolith.** When `FeatureMusicSearch` swells with caching, animations, analytics, and view logic, even a font tweak can trigger a 30-second recompile of the entire feature. By the end of this chapter, a UI change recompiles only the UI, and logic tests run without linking a single view.
+
 If you have successfully implemented the architecture described in chapters 1 through 6, you are in an excellent position. Your app builds faster, teams are isolated, and dependencies are managed cleanly through abstractions.
 
 However, in very large organizations with hundreds of iOS developers and millions of lines of code, even a "Feature Module" can become a mini-monolith.
@@ -57,9 +59,21 @@ Why go through this extra effort?
 2.  **Logic Testing without UIKit:** You can run unit tests on `MusicSearchLogic` without linking `UIKit` or compiling a single view. Tests run instantly.
 3.  **True Separation of Concerns:** It becomes physically impossible to put business logic inside a UI component because the UI module doesn't have access to the services required to execute that logic.
 
-## When to Stop Modularizing?
+## Checkpoint: The Mini-Monolith, Relieved
 
-It is entirely possible to over-engineer your architecture. Creating four modules for a screen that displays static text is a waste of time and adds unnecessary build overhead (Xcode still has to link those modules).
+You can now iterate on a feature's UI without recompiling its logic, and test its logic without compiling a single view.
+
+| What you do | One feature module | After splitting into micro-features |
+| --- | --- | --- |
+| Change a color in the feature | ~30s — whole feature recompiles | <2s — `MusicSearchUI` only |
+| Test the feature's logic | Links UIKit/SwiftUI | `MusicSearchLogic`, no UI linked, instant |
+| Put logic in a UI file | Possible, just discouraged | Impossible — UI can't see the services |
+
+*Illustrative; trace it in [`code/ch07-advanced-granularity`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch07-advanced-granularity), where only Music Search is split into `Interface` / `UI` / `Logic`.*
+
+## The Last Trap Is You: When to Stop Modularizing?
+
+The final trap in this book isn't in the code — it's the temptation to apply all seven chapters to every screen. It is entirely possible to over-engineer your architecture. Creating four modules for a screen that displays static text is a waste of time and adds unnecessary build overhead (Xcode still has to link those modules).
 
 **The Rule of Thumb:**
 Start with the vertical slicing we discussed in Chapter 4. Only split a feature into micro-features (UI/Logic/Interface) when that specific feature becomes painful to work on (e.g., slow build times, frequent merge conflicts, complex logic that needs isolated testing).

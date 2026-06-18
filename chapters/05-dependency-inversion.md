@@ -1,5 +1,7 @@
 # Chapter 5: Dependency Inversion & Interfaces
 
+**The pain this chapter attacks: features chained to each other and to concrete data.** Vertical slicing bought us isolated features — but the moment one feature imports another to navigate, or grabs a concrete API client to fetch, we've smuggled the spaghetti back in at the module level and made the feature untestable. By the end of this chapter, a feature depends only on protocols: change a sibling and it won't recompile; test it against a mock instead of the network.
+
 At the end of [Chapter 4](./04-vertical-slicing.md), we ran into a critical problem: **Feature-to-Feature Coupling**.
 
 If `FeatureMusicSearch` needs to navigate to `FeatureMovieDetail`, and it imports that module directly, we have coupled two feature modules together. This defeats the purpose of vertical slicing. If we change the Detail module, the Search module must recompile.
@@ -108,6 +110,18 @@ Notice the brilliant architectural trick here:
 **Feature modules do not depend on the concrete Core Data Layer.**
 
 They all depend on abstractions.
+
+## Checkpoint: Feature Coupling, Relieved
+
+You can now change one feature without recompiling its siblings, and test a feature's logic against a mock instead of the real network or database.
+
+| What you do | Before this chapter | After this chapter |
+| --- | --- | --- |
+| Change a sibling feature's screen | Importer recompiles too | Untouched — it depends on a protocol |
+| Test a feature's logic | Needs real `Infrastructure` | Inject a mock, ~0.2s |
+| Trace what a feature can reach | Any imported module | Only the `Interfaces` it declares |
+
+*Illustrative figures; verify the boundary mechanically in `code/ch05-dependency-inversion` — no `Feature*` package imports `Infrastructure` or another `Feature*`.*
 
 ## Who wires it all together?
 

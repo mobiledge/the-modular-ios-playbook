@@ -93,7 +93,22 @@ Everything else is real, but think of it as the bonus that good boundaries make 
 
 Faster builds, fewer conflicts, and isolated tests all *follow* from drawing hard lines between parts of the app. Get the boundaries right and the rest tends to come for free.
 
-In the next chapter, we will take our first step in decomposing the iTunesSearchApp monolith by extracting our shared utilities and design system into their own independent modules.
+## The Scoreboard We're Going to Beat
+
+Before we change a single line, let's write down what the monolith actually costs us. Every chapter from here ends with a **scorecard** that takes one of these numbers and knocks it down — turning "modularization helps" into something you can point at.
+
+| What you do | The monolith (our baseline) |
+| --- | --- |
+| Clean build of the whole app | ~3m 10s |
+| Change one color and see it on screen | ~40s — the whole app target recompiles |
+| Run the Music Search logic tests | compiles the entire app first, ~1m+ |
+| Two devs on two features | same target → merge conflicts on shared files |
+
+*These are illustrative figures for a mid-size app; measure your own in [`code/ch01-the-monolith`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch01-the-monolith). What matters is the order of magnitude — and how far each number falls as the chapters go.*
+
+## The First Pain We'll Attack
+
+We won't try to boil the ocean. In the next chapter we take the first, safest step: extract the one thing nearly every screen already depends on — the **design system** — and turn our first pain, *slow UI iteration*, into our first measurable win.
 
 ## Hands-On: Build the Monolith
 
