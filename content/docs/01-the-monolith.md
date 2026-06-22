@@ -55,10 +55,78 @@ iTunesSearchApp/
     │       └── PodcastRow.swift
     └── Utilities/
         ├── DateFormatter+Extensions.swift
-        └── Logger.swift
+        ├── Logger.swift
+        └── Telemetry.swift         # crash reporting, analytics, feature flags — behind plain protocols
 ```
 
 The app uses the SwiftUI app lifecycle: a single `@main App` struct and a `RootView` `TabView` stand in for the classic UIKit `AppDelegate` + `SceneDelegate` pair. Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchView` can directly instantiate `iTunesAPIClient`, which can freely reach for shared globals like `Logger` and `AppColors`. Nothing in the compiler stops any file from touching any other.
+
+## The Services We Don't Own
+
+Real apps lean on a handful of third-party platform services that have nothing to do with the product itself but everything to do with running it: a **crash reporter** so you find out when things break, an **analytics backend** so you know what people actually do, and a **feature-flag / remote-config service** so you can ship code dark and turn it on later. iTunesSearchApp is no exception — it wants all three.
+
+These services share a trait the iTunes API does not: *you will swap the vendor.* Crashlytics today, Sentry next year; Amplitude until finance picks PostHog; a homegrown flag service that eventually becomes LaunchDarkly. The product code shouldn't care. So even in the monolith we describe each one as a plain protocol — a **contract** that says what we need, with no mention of who provides it:
+
+```swift
+protocol AnalyticsTracker {
+    func track(_ event: AnalyticsEvent)
+}
+protocol CrashReporter {
+    func record(_ error: Error, context: [String: String])
+    func breadcrumb(_ message: String)
+}
+protocol FeatureFlagProvider {
+    func isEnabled(_ flag: FeatureFlag) -> Bool
+}
+```
+
+The events and flags are typed, not stringly-typed, so the whole vocabulary lives in one place and a typo can't invent a new event:
+
+```swift
+struct AnalyticsEvent { let name: String; let properties: [String: String] }
+enum FeatureFlag: String { case newPodcastUI, offlineMode }
+```
+
+There's no vendor SDK in the project yet. The only implementations are **console mocks** that print through the same `Logger` the rest of the app uses, which means the app runs end-to-end on nothing but `print` statements:
+
+```swift
+struct ConsoleAnalytics: AnalyticsTracker {
+    func track(_ e: AnalyticsEvent) { Logger.log("📊 \(e.name) \(e.properties)") }
+}
+// …ConsoleCrashReporter and LocalFeatureFlags do the same.
+```
+
+### Choosing an implementation by build configuration
+
+Something has to decide *which* implementation the app uses. In the monolith that decision is a single global, switched at compile time so development and test builds get the harmless console mocks while a real build would get the actual vendors:
+
+```swift
+enum Telemetry {
+    #if MOCK_SERVICES
+    static let analytics: AnalyticsTracker = ConsoleAnalytics()
+    static let crashReporter: CrashReporter = ConsoleCrashReporter()
+    static let flags: FeatureFlagProvider = LocalFeatureFlags([.newPodcastUI: true])
+    #else
+    // Release build → real vendor adapters arrive in a later chapter.
+    static let analytics: AnalyticsTracker = ConsoleAnalytics()
+    static let crashReporter: CrashReporter = ConsoleCrashReporter()
+    static let flags: FeatureFlagProvider = LocalFeatureFlags()
+    #endif
+}
+```
+
+The `MOCK_SERVICES` flag is set for the Debug configuration in `project.yml`, so it's a deliberate, readable switch rather than Xcode magic:
+
+```yaml
+settings:
+  configs:
+    Debug:   { SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG MOCK_SERVICES }
+    Release: { SWIFT_ACTIVE_COMPILATION_CONDITIONS: "" }
+```
+
+Feature code then talks only to the seam — `Telemetry.analytics.track(…)` in the Music search, `Telemetry.crashReporter.breadcrumb("app_launch")` at startup, `Telemetry.flags.isEnabled(.newPodcastUI)` in Podcasts — and never names a vendor.
+
+This is the right *idea* in the wrong *shape*. The contract is already independent of the provider, which is exactly what we want. But the protocols, the mocks, and the global that wires them all still live in the same target as the features that call them — so nothing stops a tired developer from skipping the seam and importing a vendor SDK straight into a view. That gap between "good intention" and "compiler-enforced rule" is the whole story of this book: in later chapters these contracts move into `Domain`, the implementations into `Infrastructure`, the build-config choice into a composition root, and finally the entire concern becomes its own `Observability` SPM package whose vendor SDKs never even link into a Debug or test build.
 
 ## The Breaking Point
 
@@ -143,6 +211,7 @@ The sample code is deliberately tangled to make later chapters' refactors concre
 
 *   **Feature views instantiate `iTunesAPIClient.shared` directly.** There is no protocol or injection, so the Music and Podcasts features cannot compile or be tested without the networking layer.
 *   **`RootView` knows about every feature**, and shared tokens like `AppColors` and `Logger` are global to the whole target.
+*   **Features reach for the global `Telemetry` facade directly.** Music's search calls `Telemetry.analytics.track(…)` and Podcasts reads `Telemetry.flags.isEnabled(.newPodcastUI)`. The contracts are clean, but the protocols, mocks, and the build-config switch all share the target — so the boundary is a convention, not a rule the compiler enforces.
 
 These are exactly the knots we'll untie. By the end of the playbook, each will be replaced by an explicit, compiler-enforced boundary.
 

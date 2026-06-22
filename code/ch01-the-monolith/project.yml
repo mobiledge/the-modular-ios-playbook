@@ -22,6 +22,15 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+  configs:
+    # MONOLITH NOTE: we flag Debug builds with MOCK_SERVICES so the global
+    # `Telemetry` facade can select console mocks instead of real vendor SDKs.
+    # This single switch is the seed of a much bigger idea — in later chapters
+    # the whole selection moves into a composition root and an SPM package.
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG MOCK_SERVICES
+    Release:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
 
 targets:
   iTunesSearchApp:
