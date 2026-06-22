@@ -84,7 +84,7 @@ The [`code/ch03-domain-infrastructure`](https://github.com/mobiledge/the-modular
 
 - **Entities** — `Track`, `Movie`, `Audiobook`, `SavedItem`, and a `MediaType` enum. Notice they use concept-first names (`name`, `artist`, `artworkURL`) rather than the iTunes JSON names. They are no longer `Decodable`; decoding is an outside concern.
 - **Repository protocols** — `MediaSearchRepository` and `LibraryRepository`. The domain declares *what* it needs, not *how*.
-- **Telemetry contracts** — `AnalyticsTracker`, `CrashReporter`, and `FeatureFlagProvider`, plus the typed `AnalyticsEvent` and `FeatureFlag`, under `Observability/`. These are the very protocols we seeded into the Chapter 1 monolith; now they move *inward* to the layer that owns contracts. They belong here for the same reason the repositories do — they describe what the app needs ("track this event", "is this flag on?") without naming a vendor.
+- **Cross-cutting service contracts** — `Logger`, `CrashReporter`, `AnalyticsTracker`, and `FeatureFlagProvider`, plus the typed `AnalyticsEvent` and `FeatureFlag`, in `Observability/Contracts.swift`. These are the same four protocols we seeded into the Chapter 1 monolith; now they move *inward* to the layer that owns contracts. They belong here for the same reason the repositories do — they describe what the app needs ("log this", "track that", "is this flag on?") without naming a vendor.
 - **A use case** — `SearchMediaUseCase`, which trims and validates a query before delegating to a repository.
 
 Crucially, the Domain's `Package.swift` declares **no dependencies**, and no file in it imports SwiftUI, Core Data, or any networking API.
@@ -96,7 +96,7 @@ Crucially, the Domain's `Package.swift` declares **no dependencies**, and no fil
 - `SearchDTOs.swift` holds the `Decodable` DTOs that know the iTunes JSON shape (`trackName`, `artworkUrl100`, …) and map themselves to domain entities. This is the *only* file that changes if the API's JSON changes.
 - `ITunesSearchRepository` implements `MediaSearchRepository` with `URLSession`.
 - `CoreDataLibraryRepository` (over an internal `CoreDataStack`) implements `LibraryRepository`.
-- `Observability/ConsoleTelemetry.swift` holds `ConsoleAnalytics`, `ConsoleCrashReporter`, and `LocalFeatureFlags` — the same console mocks from Chapter 1, now sitting where the real vendor adapters (a Crashlytics or Amplitude wrapper) would go. The `#if MOCK_SERVICES` global is gone; in the next two chapters the *choice* of implementation moves out of the code entirely and into a composition root.
+- `Observability/ConsoleServices.swift` holds `ConsoleLogger`, `ConsoleAnalytics`, `ConsoleCrashReporter`, and `LocalFeatureFlags` — the same console implementations from Chapter 1, now sitting where the real vendor adapters (a `RemoteLogger`, a Crashlytics or Amplitude wrapper) would go. Note that `ConsoleLogger` *replaces* the old internal `Logger` enum: logging is now the same kind of injectable contract as everything else, so `ITunesSearchRepository` and the Core Data stack take a `Logger` rather than reaching for a global. The `#if MOCK_SERVICES` global is gone too; in the next two chapters the *choice* of implementation moves out of the code entirely and into a composition root.
 
 ### What the app looks like now
 

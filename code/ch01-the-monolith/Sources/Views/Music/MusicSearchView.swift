@@ -39,11 +39,11 @@ struct MusicSearchView: View {
         // MONOLITH NOTE: the view reaches straight for the global telemetry
         // facade — convenient now, but it means this Music feature can't be
         // tested without dragging analytics and crash reporting along too.
-        Telemetry.analytics.track(AnalyticsEvent("music_search", ["term": term]))
+        Services.analytics.track(AnalyticsEvent("music_search", ["term": term]))
         do {
             tracks = try await api.searchMusic(term: term)
         } catch {
-            Telemetry.crashReporter.record(error, context: ["feature": "music_search"])
+            Services.crashReporter.record(error, context: ["feature": "music_search"])
             errorMessage = "Failed to load: \(error.localizedDescription)"
         }
         isLoading = false

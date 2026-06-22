@@ -9,9 +9,11 @@ import Domain
 public final class ITunesSearchRepository: MediaSearchRepository {
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let logger: Logger
 
-    public init(session: URLSession = .shared) {
+    public init(session: URLSession = .shared, logger: Logger = ConsoleLogger()) {
         self.session = session
+        self.logger = logger
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         self.decoder = decoder
@@ -34,7 +36,7 @@ public final class ITunesSearchRepository: MediaSearchRepository {
 
     private func fetch<Item: Decodable>(term: String, media: String, entity: String) async throws -> [Item] {
         let url = Endpoints.search(term: term, media: media, entity: entity)
-        Logger.log("GET \(url.absoluteString)")
+        logger.log("GET \(url.absoluteString)")
 
         let (data, response) = try await session.data(from: url)
         guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {

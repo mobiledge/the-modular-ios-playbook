@@ -1,13 +1,21 @@
 import Foundation
 
-// Telemetry contracts — the vendor-agnostic seam first introduced in Chapter 1.
+// Cross-cutting service contracts — the vendor-agnostic seams first introduced
+// in Chapter 1: logging, crash reporting, analytics, and feature flags.
 //
 // In the monolith these protocols lived in the app target next to their console
 // mocks. Now they move *inward* to the Domain layer, because they describe what
-// the app needs ("track this event", "is this flag on?") without saying who
-// provides it. The Dependency Rule applies exactly as it does to repositories:
-// the Domain declares the protocol; Infrastructure implements it; the vendor SDK
-// never crosses this line.
+// the app needs ("log this", "track that", "is this flag on?") without saying
+// who provides it. The Dependency Rule applies exactly as it does to
+// repositories: the Domain declares the protocol; Infrastructure implements it;
+// the vendor SDK never crosses this line.
+
+/// What the app needs in order to log — not where the logs go. In dev they
+/// print to the console; in production the same calls can be routed to a log
+/// service. Which one is a composition-root decision, not a call-site one.
+public protocol Logger: Sendable {
+    func log(_ message: String)
+}
 
 /// What the app needs in order to report analytics — not who provides it.
 public protocol AnalyticsTracker: Sendable {

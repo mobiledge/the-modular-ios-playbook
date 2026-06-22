@@ -30,7 +30,7 @@ struct PodcastsView: View {
             // MONOLITH NOTE: a remote feature flag toggles new UI. The view asks
             // the global flag provider directly; in Debug builds MOCK_SERVICES
             // turns `newPodcastUI` on so we can see the in-progress design.
-            .navigationTitle(Telemetry.flags.isEnabled(.newPodcastUI) ? "Podcasts ✨" : "Podcasts")
+            .navigationTitle(Services.flags.isEnabled(.newPodcastUI) ? "Podcasts ✨" : "Podcasts")
             .searchable(text: $term, prompt: "Search podcasts")
             .onSubmit(of: .search) { Task { await search() } }
             .overlay { if isLoading { ProgressView() } }

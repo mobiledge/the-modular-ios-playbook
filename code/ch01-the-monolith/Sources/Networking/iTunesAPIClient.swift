@@ -31,7 +31,7 @@ final class iTunesAPIClient {
 
         // 2. Construct Request
         let request = URLRequest(url: url)
-        Logger.log("GET \(url.absoluteString)")
+        Services.logger.log("GET \(url.absoluteString)")
 
         // 3. Dispatch Request
         let (data, response) = try await session.data(for: request)
@@ -59,7 +59,7 @@ final class iTunesAPIClient {
 
         // 2. Construct Request
         let request = URLRequest(url: url)
-        Logger.log("GET \(url.absoluteString)")
+        Services.logger.log("GET \(url.absoluteString)")
 
         // 3. Dispatch Request
         let (data, response) = try await session.data(for: request)

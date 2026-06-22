@@ -24,7 +24,7 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
   configs:
     # MONOLITH NOTE: we flag Debug builds with MOCK_SERVICES so the global
-    # `Telemetry` facade can select console mocks instead of real vendor SDKs.
+    # `Services` facade can select console mocks instead of real vendor SDKs.
     # This single switch is the seed of a much bigger idea — in later chapters
     # the whole selection moves into a composition root and an SPM package.
     Debug:
