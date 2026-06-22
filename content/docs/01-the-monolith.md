@@ -60,6 +60,38 @@ iTunesSearchApp/
 
 The app uses the SwiftUI app lifecycle: a single `@main App` struct and a `RootView` `TabView` stand in for the classic UIKit `AppDelegate` + `SceneDelegate` pair. Everything is neatly organized into folders, but from the compiler's perspective, this is all one giant bucket of code. `MusicSearchView` can directly instantiate `iTunesAPIClient`, which can freely reach for shared globals like `Services.logger` and `AppColors`. Nothing in the compiler stops any file from touching any other.
 
+## The Building Blocks: Roles, Not Folders
+
+The file tree above is an *organizational* view — and folders, as we'll see, are only a suggestion the compiler happily ignores. The more useful way to look at iTunesSearchApp is by the **roles** its code plays. Strip away the folders and the app is made of six distinct kinds of thing. Each one does a different job, sits in a different place in the dependency graph, and — this is the part that matters — has a different destiny in the chapters ahead. The whole rest of this book is just giving each of these roles a boundary the compiler enforces.
+
+What the user sees on screen is only one of the six. Here's the full cast:
+
+1.  **App composition** — `iTunesSearchApp.swift` (the `@main` entry point) and `RootView`'s `TabView`. This is the code that *wires the app together*: it knows about every feature and stands them up. It depends on almost everything; almost nothing depends on it. → It becomes the **composition root** in Chapter 6.
+2.  **Features** — Music and Podcasts (the views and their rows). This is the actual product — the screens a user touches. Features depend on the design system, the models, and the networking; nothing depends on a feature except the composition that hosts it. → They become isolated **vertical feature slices** in Chapter 4.
+3.  **Design System** — everything under `Shared/`: the tokens (`AppColors`, `Typography`, `Layout`) and the components built from them (`CardView`, `TagView`, `PrimaryButton`, …). *Many* things depend on it; it depends on almost nothing. → It's the **first thing we extract**, in Chapter 2.
+4.  **Domain** — the models (`Track`, `Podcast`) and the four service *contracts*: the protocols, plus the typed `AnalyticsEvent` and `FeatureFlag` vocabulary. This is the pure description of *what the app is about*, with no mention of UIKit, the network, or any vendor. → It becomes the **`Domain` module** in Chapter 3.
+5.  **Infrastructure** — the things that talk to the outside world: `iTunesAPIClient`, the console implementations of the four services, and the real vendor adapters that arrive later. These *implement* the Domain's contracts. → It becomes the **`Infrastructure` module** in Chapter 3, and gets inverted so Domain stops depending on it in Chapter 5.
+6.  **Build tooling** — `project.yml` and XcodeGen. This one isn't Swift at all, and it's easy to overlook, but it's the most important block of the lot: it's the thing that actually *defines targets*, which is how every boundary in this book gets made real. → It doesn't get extracted; it grows, one module at a time, through every chapter.
+
+### Why dependency direction is the whole game
+
+Notice what those descriptions kept circling back to: who depends on whom. That arrow is the single most important property of each block, because it tells you *what is safe to pull out first*. The design system has **many incoming, few outgoing** dependencies — lots of code needs it, it needs almost nothing — which makes it the lowest-risk thing to extract. The composition root is the opposite — **few incoming, many outgoing** — which is why it's the *last* thing we settle, in Chapter 6. Hold onto this idea; it's the reasoning behind the order of the entire book.
+
+### The roadmap, on one page
+
+Here's the cast and where each member is headed. Every chapter from here takes one row and turns its boundary from a convention into a rule:
+
+| Building block | What it is | Depends on | Depended on by | Where it's headed |
+| --- | --- | --- | --- | --- |
+| Design System | Tokens + reusable UI components | (almost nothing) | Features, Composition | **Ch 2** — first module extracted |
+| Domain | Models + service contracts | (nothing) | Features, Infrastructure | **Ch 3** — `Domain` module |
+| Infrastructure | Networking + service implementations | Domain | Composition | **Ch 3 / Ch 5** — `Infrastructure`, then inverted |
+| Features | Music & Podcasts screens | Design System, Domain | Composition | **Ch 4** — vertical feature slices |
+| App composition | `@main` + `RootView` wiring | everything | (nothing) | **Ch 6** — composition root |
+| Build tooling | `project.yml` / XcodeGen | — | — | grows every chapter |
+
+Keep this table handy. The names in its first column are the vocabulary for the rest of the book — when a later chapter says "move the contracts into `Domain`," this is the `Domain` it means. With the cast established, let's look more closely at the one block that's easiest to get wrong: the cross-cutting services.
+
 ## The Cross-Cutting Services
 
 Every app leans on a handful of cross-cutting services that aren't the product but keep it running: **logging** for everyday diagnostics, a **crash reporter** so you find out when things break, an **analytics backend** so you know what people actually do, and a **feature-flag / remote-config service** so you can ship code dark and turn it on later. iTunesSearchApp wants all four.
