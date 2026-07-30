@@ -3,17 +3,17 @@ title: "Chapter 1: The Monolith"
 weight: 1
 ---
 
-Welcome to the starting point of our journey. Before we can appreciate the benefits of a modular architecture, we must first understand the problems we are trying to solve. To do this, we'll start where almost every iOS application begins: **The Monolith**.
+Two people, a laptop, and a deadline. That's the whole company. A founder and one developer are trying to ship v1 of a media search app before the money runs out, and the fastest way to get there is to put everything — every screen, every model, every network call — into a single Xcode project and start typing. This chapter is that v1, and it's the starting point of our journey: before we can appreciate the benefits of a modular architecture, we must first understand the problem it solves. To do this, we'll start where almost every iOS application begins: **The Monolith**.
 
 ## What is a Monolith?
 
 In the context of iOS development, a monolithic architecture means that all your application code—UI elements, network requests, database models, business logic, and third-party integrations—resides in a single app target. When you open Xcode and click "Create a new Xcode project," you are creating a monolith.
 
-This isn't inherently a bad thing. In fact, for very small projects, prototypes, or indie apps maintained by a single developer, a monolithic structure is often the fastest and simplest way to build.
+This isn't inherently a bad thing. In fact, for very small projects, prototypes, or indie apps maintained by a single developer — like our two-person startup — a monolithic structure is often the fastest and simplest way to build. There is no team to coordinate, no ownership to divide, and no build-time tax large enough to notice. **At this size, the monolith is the right choice** — the honest answer to "is a module boundary worth it here?" is *no*. Keep that question in mind; every chapter from here on asks it again at a larger size, and the answer won't stay no for long.
 
 ## Our Sample Application: iTunesSearchApp
 
-Throughout this playbook, we will be refactoring a fictional media search application called **iTunesSearchApp**.
+Throughout this playbook, we will be refactoring a fictional media search application called **iTunesSearchApp**. It's the one app our two-person startup shipped: v1 covers exactly two features, Music and Podcasts, and nothing else.
 
 iTunesSearchApp has a couple of core features:
 1.  **Music Search:** A searchable list of music tracks fetched from the iTunes API.
@@ -89,6 +89,8 @@ Here's the cast and where each member is headed. Every chapter from here takes o
 | Features | Music & Podcasts screens | Design System, Domain | Composition | **Ch 4** — vertical feature slices |
 | App composition | `@main` + `RootView` wiring | everything | (nothing) | **Ch 6** — composition root |
 | Build tooling | `project.yml` / XcodeGen | — | — | grows every chapter |
+
+This table only covers the cast already on stage — two more members join later. In **Chapter 5**, a new feature, Movies, is born already modular, and forces the composition root to stop depending on concrete features at all. In **Chapter 7** — the proof chapter — a new Audiobooks feature ships and Podcasts is retired, on camera, as the demonstration that adding and deleting a feature is now a small, contained change. And once the team outgrows even a single feature module, **Chapter 8** asks the last question this book asks: how far should you split a single feature, and when should you stop.
 
 Keep this table handy. The names in its first column are the vocabulary for the rest of the book — when a later chapter says "move the contracts into `Domain`," this is the `Domain` it means. With the cast established, let's look more closely at the one block that's easiest to get wrong: the cross-cutting services.
 
@@ -225,7 +227,9 @@ Before we change a single line, let's write down what the monolith actually cost
 
 ## The First Pain We'll Attack
 
-We won't try to boil the ocean. In the next chapter we take the first, safest step: extract the one thing nearly every screen already depends on — the **design system**. Its standout payoff is *closing the gap between design and code*: once the design system is its own module, we can render it on its own as a live catalog, giving design and engineering the single source of truth they were missing. Faster UI iteration comes along for the ride — and gives us our first number to knock down on the scoreboard.
+We won't try to boil the ocean. And the next pain doesn't wait for the team to hit 20 — it shows up as soon as the startup hires its third person. A designer joins, the company signs off on a brand refresh, and suddenly every color and radius in the app is up for change at once. With the tokens buried inside the single app target, every tweak to `AppColors` forces a full rebuild of the entire app just to see one new shade on screen — the whole world rebuilds to check one color.
+
+So in the next chapter we take the first, safest step: extract the one thing nearly every screen already depends on — the **design system**. Its standout payoff is *closing the gap between design and code*: once the design system is its own module, we can render it on its own as a live catalog, giving design and engineering the single source of truth they were missing. Faster UI iteration comes along for the ride — and gives us our first number to knock down on the scoreboard.
 
 ## Hands-On: Build the Monolith
 
@@ -256,6 +260,16 @@ The sample code is deliberately tangled to make later chapters' refactors concre
 *   **Features reach for the global `Services` facade directly.** The API client calls `Services.logger.log(…)`, Music's search calls `Services.analytics.track(…)`, and Podcasts reads `Services.flags.isEnabled(.newPodcastUI)`. The four contracts are clean, but the protocols, implementations, and the build-config switch all share the target — so the boundary is a convention, not a rule the compiler enforces.
 
 These are exactly the knots we'll untie. By the end of the playbook, each will be replaced by an explicit, compiler-enforced boundary.
+
+### Exercise: try to delete Podcasts
+
+Here's an exercise that makes the coupling impossible to un-see. Podcasts is, on the surface, the smaller of the two features — its own view, its own row, its own model. It *sounds* like it should be deletable in five minutes. Try it:
+
+1.  Grep the project for every file that mentions `Podcast`, `PodcastsView`, `PodcastRow`, or `.newPodcastUI`.
+2.  For each hit, decide whether you'd actually have to touch that file to remove the feature cleanly — not just the `Views/Podcasts/` folder, but `RootView`, the shared `FeatureFlag` enum, anywhere `Services.flags` is switched on Podcasts, and anything else the grep turns up.
+3.  Write the number down.
+
+That number is your real coupling score — not an opinion about the architecture, a count you can point at. Keep it. We'll delete Podcasts for real near the end of the book, and it will take minutes.
 
 ---
 
