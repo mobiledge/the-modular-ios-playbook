@@ -3,10 +3,14 @@ import DesignSystem
 
 /// The app's root tab bar, wiring together the two core features.
 ///
-/// With the SwiftUI app lifecycle this composition lives here in a `TabView`
-/// (in the UIKit world it would have lived in the `SceneDelegate`). Note how the
-/// root knows about every feature directly — another hallmark of the monolith
-/// we'll untangle in the Composition Root chapter.
+/// In the UIKit world this composition lived in the SceneDelegate; here it is
+/// a SwiftUI `TabView`.
+///
+/// MONOLITH NOTE: `RootView` knows about every feature directly — it imports
+/// and instantiates `MusicSearchView` and `PodcastsView` by name. There is no
+/// composition root to isolate this wiring from the features themselves;
+/// another hallmark of the monolith we'll untangle in the Composition Root
+/// chapter.
 struct RootView: View {
     var body: some View {
         TabView {
