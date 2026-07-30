@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "FeatureMusicSearch",
+    name: "FeaturePodcasts",
     platforms: [
         .iOS(.v17)
     ],
     products: [
-        .library(name: "FeatureMusicSearch", targets: ["FeatureMusicSearch"])
+        .library(name: "FeaturePodcasts", targets: ["FeaturePodcasts"])
     ],
     dependencies: [
         // No Infrastructure: the Chapter 4 flaw is fixed. This feature depends
@@ -18,7 +18,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "FeatureMusicSearch",
+            name: "FeaturePodcasts",
             dependencies: ["DesignSystem", "Domain"]
         )
     ]

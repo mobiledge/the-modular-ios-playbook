@@ -1,146 +1,270 @@
 ---
-title: "Chapter 5: Dependency Inversion & Interfaces"
+title: "Chapter 5: The Feature That Broke the Graph"
 weight: 5
 ---
 
 **The pain this chapter attacks: features chained to each other and to concrete data.** Vertical slicing bought us isolated features — but the moment one feature imports another to navigate, or grabs a concrete API client to fetch, we've smuggled the spaghetti back in at the module level and made the feature untestable. By the end of this chapter, a feature depends only on protocols: change a sibling and it won't recompile; test it against a mock instead of the network.
 
-At the end of [Chapter 4]({{< relref "04-vertical-slicing" >}}), we ran into a critical problem: **Feature-to-Feature Coupling**.
+## Where We Are
 
-If `FeatureMusicSearch` needs to navigate to `FeatureMovieDetail`, and it imports that module directly, we have coupled two feature modules together. This defeats the purpose of vertical slicing. If we change the Detail module, the Search module must recompile.
-
-Furthermore, we might have a similar problem with our data layer. What if we want to mock the `iTunesAPIClient` during testing so we don't hit the real network? If our ViewModels directly instantiate `iTunesAPIClient()`, we cannot easily swap it out for a `MockiTunesAPIClient`.
-
-The solution to both problems is the 'D' in SOLID: **Dependency Inversion**.
-
-> **Dependency Inversion Principle:** High-level modules should not import anything from low-level modules. Both should depend on abstractions (e.g., interfaces/protocols).
-
-## Step 1: Inverting Data Dependencies
-
-Let's look at our `FeatureLibrary`. Currently, it depends directly on the concrete `iTunesAPIClient` from `CoreDataLayer`.
-
-```swift
-// BAD: Direct coupling to concrete class
-import CoreDataLayer
-
-class LibraryViewModel {
-    let apiClient = iTunesAPIClient() // Tightly coupled!
-}
-```
-
-We fix this by introducing a protocol. We can place this protocol inside the `FeatureLibrary` module itself, or in a shared `FeatureInterfaces` module. For simplicity, let's say we define it within the feature that needs it.
-
-```swift
-// In FeatureLibrary
-public protocol LibraryDataService {
-    func fetchSavedItems() -> [Track]
-}
-
-class LibraryViewModel {
-    let dataService: LibraryDataService
-
-    // Injected via initializer
-    init(dataService: LibraryDataService) {
-        self.dataService = dataService
-    }
-}
-```
-
-Notice that `FeatureLibrary` no longer needs to import `CoreDataLayer` just to define its dependencies! It only depends on the *abstraction* (`LibraryDataService`).
-
-## Step 2: Inverting Feature Dependencies (Navigation)
-
-How do we solve the navigation problem between `FeatureMusicSearch` and `FeatureMovieDetail`?
-
-We use the same principle. `FeatureMusicSearch` should not know about `MovieDetailViewController`. It should only know that *some object* exists that can handle routing to the detail screen.
-
-```swift
-// In FeatureMusicSearch
-public protocol MusicSearchRouter {
-    func routeToMovieDetail(for movieID: String)
-}
-
-class MusicSearchViewModel {
-    let router: MusicSearchRouter
-
-    init(router: MusicSearchRouter) {
-        self.router = router
-    }
-
-    func didTapMovieSoundtrack(_ movieID: String) {
-        // We delegate the navigation!
-        router.routeToMovieDetail(for: movieID)
-    }
-}
-```
-
-## The "Interfaces" Module Strategy
-
-In a large app, defining these protocols inside every single feature module can get messy. A common pattern is to extract these protocols into one or more `Interfaces` or `Contracts` modules.
-
-Let's create an `iTunesSearchInterfaces` module.
-
-1.  **Create the Module:** Create `iTunesSearchInterfaces`.
-2.  **Move Protocols:** Move `LibraryDataService` and `MusicSearchRouter` into this module.
-
-Now, our architectural graph looks like this:
+[Chapter 4]({{< relref "04-vertical-slicing" >}}) split the app into feature packages —
+`FeatureMusicSearch`, `FeaturePodcasts`, and `FeatureLibrary` — sitting on top of `DesignSystem`,
+`Domain`, and `Infrastructure`. The app target shrank to two files (`iTunesSearchApp.swift`,
+`RootView.swift`), and two squads stopped colliding on the same `RootView.swift`/`project.yml`.
+The module graph, with the flaw Chapter 4 named and deliberately left in place:
 
 ```text
-               ┌───────────────────┐
-               │ iTunesSearchApp   │ (Main Target)
-               └─┬───────────────┬─┘
-                 │               │
-       ┌─────────▼─┐           ┌─▼─────────┐
-       │ Feature   │           │ Feature   │
-       │ Music     │           │ Library   │
-       │ Search    │           │           │
-       └────┬──────┘           └─────┬─────┘
-            │                        │
-            ▼                        ▼
-      ┌────────────┐           ┌───────────┐
-      │            │           │           │
-      │ iTunes     │◄──────────┤ Core      │
-      │ Search     │           │ Data      │
-      │ Interfaces │           │ Layer     │
-      └────────────┘           └───────────┘
+                              ┌─────────────────────┐
+                              │    iTunesSearchApp   │
+                              └──┬─────┬─────┬───────┘
+                                 │     │     │
+              ┌──────────────────┘     │     └──────────────────┐
+              ▼                        ▼                        ▼
+     FeatureMusicSearch          FeaturePodcasts            FeatureLibrary  ◄── FeatureLibraryDemo
+              │                        │                        │
+              └───────────┬────────────┴────────────┬───────────┘
+                           ▼                         ▼
+                     Infrastructure ───────────►   Domain
+                           │
+                           ▼
+                     DesignSystem ◄── (all three features)   Catalog ──► DesignSystem
 ```
 
-Notice the brilliant architectural trick here:
-1.  `FeatureMusicSearch` depends on `iTunesSearchInterfaces` (to see the `Router` protocol).
-2.  `CoreDataLayer` depends on `iTunesSearchInterfaces` (so `iTunesAPIClient` can explicitly conform to the `LibraryDataService` protocol).
+Every feature package depends on `Domain`, `DesignSystem`, **and `Infrastructure`** — that last
+edge is the deliberate flaw. Each feature package constructs its own `ITunesSearchRepository`,
+`CoreDataLibraryRepository`, `ConsoleAnalytics`, and friends inline, which only works because it
+can still import the concrete `Infrastructure` package directly.
 
-**No feature module depends on another feature module.**
-**Feature modules do not depend on the concrete Core Data Layer.**
+## Pain: Movies Needs a Screen It Doesn't Own
 
-They all depend on abstractions.
+> **Deepa (new hire, Movies squad):** Product wants a Movies tab — browse, search, save to
+> Library, same as Music and Podcasts. I'm starting from scratch, so I did it right: brand-new
+> `FeatureMovies` package, depends on `Domain` and `DesignSystem` only, no `Infrastructure`
+> import. Clean.
+>
+> **Priya (Library squad):** Nice. One thing, though — when someone saves a movie and taps it in
+> their Library, product wants that to open the *real* movie detail screen, not just a generic
+> row. That's `MovieDetailScreen`, right? In your package?
+>
+> **Deepa:** Right, Movies owns its own detail screen. So you'd just `import FeatureMovies` in
+> `FeatureLibrary` and push it.
+>
+> **Priya:** I tried that. Watch what happens to the `FeatureLibraryDemo` build.
+>
+> ```swift
+> // FeatureLibrary/Package.swift — the naive fix
+> dependencies: [
+>     .package(path: "../DesignSystem"),
+>     .package(path: "../Domain"),
+>     .package(path: "../Infrastructure"),
+>     .package(path: "../FeatureMovies")   // <-- to reach MovieDetailScreen
+> ]
+> ```
+>
+> **Priya:** `FeatureLibraryDemo` used to build in seconds, touching only `FeatureLibrary` and its
+> three dependencies. The moment I add that import, it transitively pulls in `FeatureMovies` and
+> everything Movies touches — the "fast, isolated" demo app Chapter 4 promised isn't isolated
+> anymore. And the dependency diagram just grew a horizontal edge: `FeatureLibrary → FeatureMovies`.
+> That's exactly the shape Chapter 4 warned about — a feature importing another feature's package
+> by name.
+>
+> **Sam (Search & Podcasts squad):** So every time Deepa touches anything in `FeatureMovies`, your
+> `FeatureLibrary` — and its demo app — has to recompile too. Vertical slicing was supposed to stop
+> that.
+>
+> **Priya:** It did, for Music and Podcasts, because neither of them needs to reach into the
+> other. Library is the first feature that actually needs to navigate into a sibling. We can't
+> just not solve the navigation problem — but importing the sibling module by name is the wrong
+> way to solve it.
 
-## Checkpoint: Feature Coupling, Relieved
+The measured cost: one `import FeatureMovies` line in `FeatureLibrary/Package.swift` turns a
+three-package build (`FeatureLibrary` + `Domain` + `DesignSystem` + `Infrastructure`) into a
+five-package one, and draws a feature-to-feature edge on the dependency diagram that didn't exist
+before. Multiply that by every future feature Library might need to open, and the "isolated
+feature" promise from Chapter 4 quietly erodes.
 
-You can now change one feature without recompiling its siblings, and test a feature's logic against a mock instead of the real network or database.
+## Diagnosis: Dependency Inversion, Applied Twice
+
+The Dependency Inversion Principle: high-level modules and low-level modules should both depend on
+abstractions, not on each other directly. This chapter applies it in two places that look
+different but are the same fix:
+
+**Data.** Every feature already talks to `MediaSearchRepository` / `LibraryRepository` —
+protocols that live in `Domain`. The `Infrastructure` import each feature still has is not
+buying anything new; the feature could just as well receive an already-built repository through
+its initializer. Dropping the `Infrastructure` dependency isn't adding an abstraction — it's
+*deleting* one that was never needed, because the abstraction (the protocol) already existed one
+layer down.
+
+**Navigation.** `FeatureLibrary` doesn't need to know that a saved movie's detail screen is called
+`MovieDetailScreen`, or that it lives in `FeatureMovies`. It only needs to say "open whatever this
+saved item opens" — a protocol. That protocol can't live in `Domain` (screens aren't a domain
+concept) and it can't live in `FeatureMovies` (that's the module `FeatureLibrary` isn't allowed to
+import). It needs a new, small home: `Packages/AppInterfaces`, holding a `LibraryRouter` protocol
+that depends only on `Domain`. `FeatureLibrary` declares *what should happen*
+(`router.openSavedItem(item)`), never *where to go*.
+
+## Refactor: Two Inversions, One Package
+
+We did this in the order it actually has to happen — Domain first, since every package below
+depends on it:
+
+1. **Add `Movie` to `Domain`.** A new entity (`Movie`), plus `searchMovies(term:)` on
+   `MediaSearchRepository` and a matching `movies(matching:)` method on `SearchMediaUseCase`. This
+   is the first entity introduced *for* a feature that's arriving as a package rather than one
+   migrating out of an app-target folder.
+2. **Build `Packages/FeatureMovies`.** `MoviesScreen` + `MovieDetailScreen` + `MovieRow`, depending
+   only on `{Domain, DesignSystem}`. It never depends on `Infrastructure` — there is no Chapter-4
+   -style flaw to unwind here, because Movies never had an app-target phase to inherit one from.
+3. **Show, and reject, the naive fix.** `FeatureLibrary` importing `FeatureMovies` compiles, but
+   it reintroduces feature-to-feature coupling and blows up `FeatureLibraryDemo`'s build (see
+   Pain, above). Revert it.
+4. **Create `Packages/AppInterfaces`.** One protocol: `LibraryRouter`, with a single method,
+   `openSavedItem(_:)`, returning a type-erased view. It depends only on `Domain`.
+5. **`FeatureLibrary` depends on `AppInterfaces`, not `FeatureMovies`.** `LibraryScreen` is
+   injected with a `LibraryRouter` and calls `router.openSavedItem(item)` instead of constructing
+   any concrete detail screen. It has no idea `FeatureMovies` exists.
+6. **Strip `Infrastructure` from all four feature packages.** `FeatureMusicSearch`,
+   `FeaturePodcasts`, `FeatureLibrary`, and `FeatureMovies` all drop the dependency. Every
+   concrete type each feature used to construct inline — `ITunesSearchRepository`,
+   `CoreDataLibraryRepository`, `ConsoleAnalytics`, `ConsoleCrashReporter`, `LocalFeatureFlags` —
+   becomes a parameter on the screen's public initializer instead:
+
+   ```swift
+   // FeatureMusicSearch — Chapter 4 (constructs its own concretes)
+   public struct MusicSearchScreen: View {
+       private let search = SearchMediaUseCase(repository: ITunesSearchRepository())
+       private let analytics: AnalyticsTracker = ConsoleAnalytics()
+       public init() {}
+   }
+
+   // FeatureMusicSearch — this chapter (dependencies injected)
+   public struct MusicSearchScreen: View {
+       private let search: SearchMediaUseCase
+       private let libraryRepository: LibraryRepository
+       private let analytics: AnalyticsTracker
+       private let crashReporter: CrashReporter
+
+       public init(
+           searchRepository: MediaSearchRepository,
+           libraryRepository: LibraryRepository,
+           analytics: AnalyticsTracker,
+           crashReporter: CrashReporter
+       ) {
+           self.search = SearchMediaUseCase(repository: searchRepository)
+           self.libraryRepository = libraryRepository
+           self.analytics = analytics
+           self.crashReporter = crashReporter
+       }
+   }
+   ```
+
+   Something still has to build an `ITunesSearchRepository` and pass it in — that's `RootView`,
+   the only place in the app now allowed to import `Infrastructure`. More on that below.
+
+### The new architecture
+
+```text
+                    ┌─────────────────────────────┐
+                    │        iTunesSearchApp       │
+                    └──┬────┬────┬────┬────┬────┬──┘
+                       │    │    │    │    │    │
+        ┌──────────────┘    │    │    │    │    └───────────────┐
+        ▼                   ▼    ▼    ▼    ▼                    ▼
+ FeatureMusicSearch  FeaturePodcasts FeatureMovies FeatureLibrary  Infrastructure
+        │                  │    │    │    │                     │
+        └───────┬──────────┴────┴──┬─┴────┘                     │
+                ▼                  ▼                            │
+          AppInterfaces ────▶   Domain   ◀──────────────────────┘
+                │
+                ▼
+          DesignSystem  ◀── (all features)      Catalog ──▶ DesignSystem
+```
+
+`AppInterfaces` depends only on `Domain`. `FeatureLibrary` is the only feature that depends on
+`AppInterfaces`. No feature package depends on another feature package, and no feature package
+depends on `Infrastructure` — the horizontal edges from Chapter 4's diagram are gone.
+
+## Verify
+
+**Features: Music, Podcasts, Library — unchanged — plus Movies, arriving this chapter.**
 
 | What you do | Before this chapter | After this chapter |
 | --- | --- | --- |
-| Change a sibling feature's screen | Importer recompiles too | Untouched — it depends on a protocol |
-| Test a feature's logic | Needs real `Infrastructure` | Inject a mock, ~0.2s |
-| Trace what a feature can reach | Any imported module | Only the `Interfaces` it declares |
+| `FeatureLibraryDemo` links | `FeatureLibrary`, `Domain`, `DesignSystem`, `Infrastructure` | `FeatureLibrary`, `Domain`, `DesignSystem`, `AppInterfaces` (`Infrastructure` only in the demo app itself, to build a real repo) |
+| Library → a saved movie's detail screen | Not possible without `import FeatureMovies` | `router.openSavedItem(item)` — no `FeatureMovies` import |
+| Trace what a feature can reach | Domain, DesignSystem, Infrastructure (concrete!) | Domain, DesignSystem, (AppInterfaces for Library) — zero concrete types |
+| Horizontal edges on the diagram | 4 (one per feature → `Infrastructure`) | 0 |
 
-*Illustrative figures; verify the boundary mechanically in [`code/ch05-dependency-inversion`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch05-dependency-inversion) — no `Feature*` package imports `Infrastructure` or another `Feature*`.*
+*Illustrative figures; verify the boundary mechanically in [`code/ch05-dependency-inversion`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch05-dependency-inversion):*
 
-## Who wires it all together?
+```bash
+grep -rn "import Infrastructure" Packages/Feature*   # 0 hits
+```
 
-If `LibraryViewModel` needs a `LibraryDataService`, but it doesn't instantiate `iTunesAPIClient` itself, who creates the `iTunesAPIClient` and passes it in?
-If `MusicSearchViewModel` calls `router.routeToMovieDetail`, who actually performs the `navigationController.push`?
+## Try It Yourself
 
-The answer is the highest-level module in our application: the one that knows about *everything*. The Composition Root. We will explore this in the next chapter.
+1. Open `code/ch05-dependency-inversion`, run `xcodegen generate`.
+2. Add `.package(path: "../FeatureMovies")` back to `FeatureLibrary/Package.swift`'s
+   `dependencies`, and add `import FeatureMovies` to `LibraryScreen.swift`.
+3. Build. It compiles — Swift doesn't stop you from adding the dependency back by hand.
+4. Now remove the line you added from `Package.swift` (but leave the `import` in the source
+   file) and build again. It fails: `no such module 'FeatureMovies'`. The package manifest is the
+   actual boundary — the compiler enforces it the moment the manifest doesn't list the import,
+   and a reviewer no longer has to catch a stray `import` by eye.
 
-## Hands-On
+## "Is This Worth It Yet?" — Interfaces Packages Multiply
 
-[`code/ch05-dependency-inversion`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch05-dependency-inversion) performs both inversions:
+One `AppInterfaces` package for one `LibraryRouter` protocol is cheap: a `Package.swift`, one
+file, a dependency on `Domain` and nothing else. But every new cross-feature need is tempting to
+solve the same way, and a dozen tiny `*Interfaces` packages is its own kind of clutter — more
+manifests to keep straight than the protocols they hold are worth. The rule this chapter leaves
+in place: **one `AppInterfaces` package until it hurts.** Chapter 8 revisits when — and whether —
+to split it further, once granularity itself becomes the problem instead of the solution.
 
-- **Data:** the feature packages drop their `Infrastructure` dependency. Their views are injected with the `MediaSearchRepository` / `LibraryRepository` protocols (from `Domain`) instead of constructing concrete clients.
-- **Navigation:** a new `AppInterfaces` package holds a `LibraryRouter` protocol. `FeatureLibrary` depends on it to navigate to a saved movie's detail screen — without importing `FeatureMovies`. The app's `AppLibraryRouter` builds the actual destination.
+## The Next Crack: Nobody Wires Any of This
 
-You can verify the boundary mechanically: no file under `Packages/Feature*` imports `Infrastructure` or another `Feature*` module. The app target does the wiring for now; Chapter 6 extracts it into a dedicated composition root.
+Run the app target right now and it doesn't compile. Every feature screen has grown an
+initializer full of protocol parameters — `MediaSearchRepository`, `LibraryRepository`,
+`AnalyticsTracker`, `CrashReporter`, `FeatureFlagProvider`, `LibraryRouter` — and *something* has
+to construct the concrete instances and pass them in. That something is currently `RootView`,
+which now imports `Infrastructure` directly, builds every concrete type by hand, and threads them
+through four screens' worth of initializers — plus an ad hoc `AppLibraryRouter` it wrote itself to
+satisfy `LibraryRouter`. It works, but it's smeared across one file with no enforcement that two
+features get the same repository instance, or that a mock and a real implementation don't get
+mixed by accident. Who's actually responsible for wiring an app together? Chapter 6 gives that
+question a name: the Composition Root.
+
+## Hands-On: Movies Born Modular
+
+The [`code/ch05-dependency-inversion`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch05-dependency-inversion)
+project is `code/ch04-vertical-slicing` plus exactly this chapter's delta — diff the two folders
+to see it. Schemes:
+
+- **`iTunesSearchApp`** — the full app (Music, Podcasts, Movies, Library tabs). Save a movie in
+  Movies, then tap it in Library — it opens `MovieDetailScreen`.
+- **`Catalog`** — the design system in isolation, unchanged from Chapter 2.
+- **`FeatureLibraryDemo`** — Library alone. Now a miniature composition root itself: it links
+  `Infrastructure` to build a real Core Data repository, and stubs `LibraryRouter` since it has no
+  other features to open.
+
+```bash
+cd code/ch05-dependency-inversion
+xcodegen generate
+open iTunesSearchApp.xcodeproj   # choose iTunesSearchApp, Catalog, or FeatureLibraryDemo
+
+# The Domain payoff, now covering Movie search too:
+swift test --package-path Packages/Domain
+```
+
+## Checkpoint: Feature Coupling, Relieved
+
+`FeatureMovies` was born depending on nothing but `Domain` and `DesignSystem` — the pattern the
+other three features had to retrofit, it got for free. `FeatureLibrary` can route to a saved
+movie's detail screen without ever importing `FeatureMovies`, and no feature package imports
+`Infrastructure` anymore. What's still unresolved is *who* builds all those concrete repositories
+and routers in the first place — right now, it's `RootView`, ad hoc, and that's the thread
+Chapter 6 picks up.
 
 ---
 
