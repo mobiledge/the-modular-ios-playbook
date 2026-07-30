@@ -1,7 +1,8 @@
 # The Well-Built Monolith — Outline
 
 *A prequel to The Modular iOS Playbook. The reader finishes with a disciplined, tested MVVM-C
-monolith — the app the Playbook will pick up on its first page.*
+monolith — plus an AI skill library that can rebuild any part of it on demand — the app the
+Playbook will pick up on its first page.*
 
 > **Contract with the sequel:** the Playbook will be revised so its Chapter 1 monolith IS this
 > book's end state (that revision is planned separately). The prequel therefore owns the road
@@ -17,9 +18,15 @@ Single Responsibility Principle extraction at a time, arrives at a monolith with
 architecture: **MVVM-C** — views that only render, view models that shape data for
 presentation and hold screen state, and a coordinator that owns navigation.
 
-Tests are not a chapter; they are a habit the book installs. Every time a responsibility gets
-its own type, that chapter ends by testing it — because *testability is the proof that the
-extraction worked*. The suite grows with the architecture, one seam at a time.
+Two habits get installed along the way, chapter by chapter:
+
+- **Tests are not a chapter; they are a habit.** Every time a responsibility gets its own
+  type, that chapter tests it — because *testability is the proof that the extraction worked*.
+- **Conventions are not tribal knowledge; they are skills.** Every standard the reader adopts
+  gets codified, right then, into an **AI skill** — a short, versioned instruction file an AI
+  coding assistant can execute — so the *next* model, view model, route, or feature is built
+  to the same standard by asking for it. The reader ends the book with a skill library that
+  is the executable documentation of their architecture.
 
 No SwiftPM packages, no repositories, no use cases, no dependency graphs. One target, one
 team, one job per type — and the taste to stop there.
@@ -27,20 +34,25 @@ team, one job per type — and the taste to stop there.
 ## Audience and prerequisites
 
 You can build SwiftUI screens, manage `@State`, and call an API with async/await — but your
-projects grow into one enormous view file and you can feel it. This book teaches structure,
-judgment, testing as you go, and restraint. It does not teach Swift or SwiftUI. (If you
-already keep a tidy monolith and your *team* is what's growing, start with the sequel.)
+projects grow into one enormous view file and you can feel it. You use (or want to use) an AI
+coding assistant and suspect it could do more than autocomplete. This book teaches structure,
+judgment, testing as you go, codifying conventions, and restraint. It does not teach Swift or
+SwiftUI. The running examples use Claude Code-style skills (a folder of `SKILL.md` files plus
+a project `CLAUDE.md` rulebook), but the pattern ports to any assistant that reads
+project-level instructions.
 
 ## The narrative
 
 A solo founder builds **iTunesSearchApp** — Music search, then Podcasts — from weekend
-prototype to the v1 a two-person startup ships at the start of The Modular iOS Playbook.
-Every chapter opens with a real moment in that growth (a crash, a feature request, a bug that
-ships twice) that motivates exactly one extraction.
+prototype to the v1 a two-person startup ships at the start of The Modular iOS Playbook. The
+founder works alongside an AI assistant the whole way, and keeps noticing the same thing:
+*the assistant is exactly as good as the conventions it's been given.* Every chapter opens
+with a real moment in that growth (a crash, a feature request, a bug that ships twice, an AI
+suggestion that ignores a standard nobody wrote down) that motivates exactly one extraction.
 
 ## The recurring devices
 
-**The responsibility ledger.** Chapter 1 writes down every job the one-and-only view is
+**1. The responsibility ledger.** Chapter 1 writes down every job the one-and-only view is
 doing. Each chapter retires exactly one row. The epilogue shows the empty ledger — and then
 asks what the compiler thinks of all these tidy boundaries. (Answer: nothing. That's the
 sequel.)
@@ -57,89 +69,129 @@ sequel.)
 | 8 | Log, track, report, and flag | Ch 9 — Service contracts |
 | 9 | Describe the project itself | Ch 10 — project.yml |
 
-**The "Prove it" beat.** Every chapter that isolates a responsibility closes by testing the
-type it just created — right there, while the seam is fresh. The rhythm is: *extract → inject
-what it needs → prove it in milliseconds*. Chapter 1 establishes the negative space (a test
-the founder literally cannot write); each extraction then earns back a piece of testability,
-and the suite's growth becomes the book's progress bar. Chapters whose output isn't
-unit-testable logic (pure rendering, tokens) say so honestly and show the right feedback tool
-for that kind of code instead (previews).
+**2. The "Prove it" beat.** Every chapter that isolates a responsibility closes by testing
+the type it just created — right there, while the seam is fresh: *extract → inject what it
+needs → prove it in milliseconds*. Chapters whose output isn't unit-testable logic (pure
+rendering, tokens) say so honestly and use the right feedback tool instead (previews).
+
+**3. The "Codify it" beat.** After the proof comes the skill: the chapter distills the
+standard it just established — naming, file placement, required tests, the things reviewers
+would otherwise repeat forever — into a skill file the AI assistant applies from then on. The
+rhythm completes: *extract → prove → codify*. Each skill is small (a page), states the
+convention and its **why**, points at one exemplar file in the codebase, and lists the
+acceptance checks (which the "Prove it" tests provide). Later skills compose earlier ones,
+so by Ch 6 "add a feature" is one request. The skill library grows in lockstep with the
+ledger — one row retired, one skill gained.
+
+| Chapter | Skill gained |
+|---|---|
+| Ch 1 | `CLAUDE.md` rulebook seeded (+ empty `.claude/skills/` as a promise) |
+| Ch 2 | `add-model` |
+| Ch 3 | `add-endpoint` |
+| Ch 4 | `extract-subview` |
+| Ch 5 | `add-view-model` |
+| Ch 6 | `add-feature` (composes add-model, add-endpoint, add-view-model, extract-subview) |
+| Ch 7 | `add-design-token` / `add-component` |
+| Ch 8 | `add-route` |
+| Ch 9 | `add-analytics-event` / `add-service` |
+| Ch 10 | `update-project` + the library becomes team onboarding |
 
 ## Chapters
 
 ### Ch 1 — The One-File App
 **Beat:** Friday night idea, Sunday night TestFlight build. A single `ContentView` holds an
 inline `URLSession` call, `JSONSerialization` dictionaries, hex color literals, magic
-paddings, and a `Bool` for every screen condition. The chapter is honest: *this is the right
-way to start* — shipping beat structure, and structure earned nothing this weekend. Introduce
-SRP as the book's lens and open the responsibility ledger. **Prove it:** the founder tries to
-write a single unit test for "durations show as minutes:seconds" — and can't. There is
-nothing to instantiate that isn't the entire screen. The empty test target is left in the
-project as a promise. **Trap left open:** everything.
+paddings, and a `Bool` for every screen condition. The AI assistant, asked to "add a
+podcasts screen," cheerfully offers to duplicate all of it — it has no standards to follow
+because none exist. The chapter is honest: *this is the right way to start* — shipping beat
+structure. Introduce SRP as the book's lens and open the responsibility ledger. **Prove it:**
+the founder tries to write a single unit test for "durations show as minutes:seconds" — and
+can't; nothing exists to instantiate except the entire screen. The empty test target stays in
+the project as a promise. **Codify it:** the other promise — a `CLAUDE.md` with the only rule
+so far ("we ship; structure must earn its place") and an empty `.claude/skills/` folder. The
+thesis lands: *an unwritten convention doesn't exist — not for the next developer, and not
+for the AI.* **Trap left open:** everything.
 
 ### Ch 2 — Models: Give Data a Type
 **Beat:** the first crash — a missing dictionary key, found by a user. **Extraction:**
 `Codable` structs (`Track`), decoded once at the boundary; optionality modeled honestly.
-`Models/` appears. **Prove it:** the first real tests — decode fixture JSON (the happy case,
-a missing artwork URL, a malformed date) and assert the model holds. The crash from the beat
-becomes a regression test. **Ledger:** the view stops being a parser. **Trap:** it still
-fetches.
+`Models/` appears. **Prove it:** the first real tests — decode fixture JSON (happy case,
+missing artwork URL, malformed date); the crash becomes a regression test. **Codify it:**
+`add-model` — the book's first skill, and the template for all that follow: the convention
+(Codable struct, decode at the boundary, honest optionals), the why (this exact crash), the
+exemplar (`Track.swift`), the acceptance checks (fixtures + decoding tests exist and pass).
+The founder asks the assistant for the next model and watches it arrive *with its fixtures*.
+**Ledger:** the view stops being a parser. **Trap:** it still fetches.
 
 ### Ch 3 — Networking: One Client, One Job
 **Beat:** the search endpoint needs a new parameter and the change touches view code.
 **Extraction:** `iTunesAPIClient` — URL building, async/await, status codes, typed errors —
 fronted by a small protocol (`SearchClient`) and *handed to* whoever needs it, not grabbed as
-a global. **Prove it:** tests for the parts that are pure logic — URL/query construction,
-error mapping from status codes, response decoding via a stubbed `URLProtocol`. The sidebar
-draws the line honestly: we test *our* logic, not Apple's networking. **Ledger:** the view
-stops being a networker. **Trap:** the screen is still one 400-line view.
+a global. **Prove it:** tests for the pure logic — URL/query construction, error mapping,
+decoding via a stubbed `URLProtocol`; we test *our* logic, not Apple's networking. **Codify
+it:** `add-endpoint` — how a new API capability enters the app: extend the protocol, implement
+in the client, map errors, test the URL and the decode. The "hand it in, don't grab it"
+injection rule graduates into `CLAUDE.md` as a project-wide law the assistant now applies
+everywhere. **Ledger:** the view stops being a networker. **Trap:** the screen is still one
+400-line view.
 
 ### Ch 4 — Views That Do One Thing
 **Beat:** changing the artwork corner radius breaks the search-field layout. **Extraction:**
 decompose the mega-view — `MusicSearchView` owns flow; `TrackRow` and `ArtworkView` render
-what they're given. Where `@State` should live; why small view structs are free. **Prove
-it — honestly:** pure rendering has no logic to unit test, and the chapter says so; the right
-feedback tool here is **previews** — one per component, with contrived states (longest title,
-missing artwork) as a visual test bed. The itch this leaves ("the formatting I *want* to test
-is still trapped in view code") is deliberate. **Ledger:** the view stops rendering every
-pixel. **Trap:** the view still *thinks* — formatting dates, juggling
+what they're given. Where `@State` should live; why small view structs are free. **Prove it —
+honestly:** pure rendering has no logic to unit test, and the chapter says so; the feedback
+tool is **previews**, one per component, with contrived states (longest title, missing
+artwork). The itch — "the formatting I *want* to test is still trapped in view code" — is
+deliberate. **Codify it:** `extract-subview` — when a view earns extraction (it renders a
+concept, not a coincidence), what it receives (values, not sources), and the requirement that
+every extracted view ships with its contrived-state previews. **Ledger:** the view stops
+rendering every pixel. **Trap:** the view still *thinks* — formatting dates, juggling
 `isLoading`/`error`/`results` booleans, deciding what "empty" means.
 
 ### Ch 5 — The View Model: Presentation Gets a Home  *(MVVM enters)*
 **Beat:** track durations render as `247.0`, release dates as ISO strings, and a
 three-`Bool` state tangle produces the famous "loading and error at once" screenshot.
 **Extraction:** `MusicSearchViewModel` (`@Observable`) — owns a single `ViewState` enum
-(`idle/loading/loaded/empty/failed`), triggers the fetch through the injected `SearchClient`,
-and transforms `Track` into a display-ready row model (formatted duration, date, artwork
-URL): *the view model shapes data for presentation; the view just renders it.* **Prove it —
-the book's flagship test moment:** a fake `SearchClient` returns canned tracks; tests drive
-the view model through loading/loaded/empty/failed and assert on the formatted output — in
-milliseconds, no simulator. The Ch 1 test the founder couldn't write gets written, verbatim,
-and passes. This is the argument that MVVM paid for itself on arrival. **Ledger:** the view
-stops shaping data and holding screen logic. **Trap:** there's still only one feature — and a
-request incoming.
+(`idle/loading/loaded/empty/failed`), fetches through the injected `SearchClient`, and
+transforms `Track` into a display-ready row model: *the view model shapes data for
+presentation; the view just renders it.* **Prove it — the book's flagship test moment:** a
+fake `SearchClient` drives the view model through every state; assertions run on formatted
+output in milliseconds, no simulator. The Ch 1 test the founder couldn't write gets written,
+verbatim, and passes. **Codify it:** `add-view-model` — the richest skill yet: the `ViewState`
+enum shape, init-injected dependencies, row-model mapping, and the non-negotiable
+fake-driven state/formatting test suite. From here on, "make a view model for X" returns the
+whole pattern, tests included. **Ledger:** the view stops shaping data and holding screen
+logic. **Trap:** there's still only one feature — and a request incoming.
 
 ### Ch 6 — The Second Feature: Resist the Copy-Paste
-**Beat:** users want podcasts; the founder's cursor hovers over ⌘C. **Extraction:** `Podcast`
-model, `PodcastsView` + `PodcastsViewModel` + `PodcastRow`, a `RootView` `TabView`, and
-feature folders that mean something: `Features/Music/`, `Features/Podcasts/` (view, view
-model, and rows live together — the shape the sequel will later cut along). The judgment
-chapter: *share* the client, *duplicate* the rows — rule of three vs premature abstraction.
-**Prove it:** the template includes its tests — `PodcastsViewModel` ships with the same
-state-machine + formatting suite in an afternoon, fixtures and fake included. A feature isn't
-done when it renders; it's done when its tests pass. **Ledger:** the view stops being the
-whole app. **Trap:** two features disagree about what "brand blue" is.
+**Beat:** users want podcasts; the founder's cursor hovers over ⌘C — then hovers over the
+skills folder instead. **Extraction:** `Podcast` model, `PodcastsView` + `PodcastsViewModel`
++ `PodcastRow`, a `RootView` `TabView`, and feature folders that mean something:
+`Features/Music/`, `Features/Podcasts/` (view, view model, rows together — the shape the
+sequel will later cut along). The judgment chapter: *share* the client, *duplicate* the rows
+— rule of three vs premature abstraction. **Prove it:** the feature ships with its
+state-machine + formatting suite; a feature isn't done when it renders, it's done when its
+tests pass. **Codify it:** `add-feature` — the book's first *composite* skill: folder layout
+plus calls into `add-model`, `add-endpoint`, `add-view-model`, `extract-subview`. Podcasts is
+built largely by *invoking* the standards codified so far, and the chapter is transparent
+about the division of labor: the skills produce the scaffolding and the tests; the founder
+makes the judgment calls (what to share, what to duplicate). Skills encode standards — they
+don't replace taste. **Ledger:** the view stops being the whole app. **Trap:** two features
+disagree about what "brand blue" is.
 
 ### Ch 7 — A Design Language, Not Scattered Constants
-**Beat:** a designer friend counts three slightly different blues and four paddings.
-**Extraction:** tokens (`AppColors`, `AppFont`, `AppSpacing`/`AppRadius`) and the components
-built from them (`AppText`, `CardView`, `TagView`, `PrimaryButton`) into `DesignSystem/` —
-one target-internal folder, deliberately named for what the sequel will one day make a
-package. **Prove it — honestly:** tokens and components are looked at, not asserted on; the
-feedback tool is a **preview catalog** — one canvas rendering every token and component,
-the visual equivalent of a test suite (and the embryo of the sequel's Catalog app).
-**Ledger:** the views stop defining the app's look. **Trap:** a track detail screen just got
-approved, and nobody owns the word "navigate."
+**Beat:** a designer friend counts three slightly different blues and four paddings — and the
+AI, asked for a new card, invents a fourth blue, because hex literals are all it has ever
+seen here. **Extraction:** tokens (`AppColors`, `AppFont`, `AppSpacing`/`AppRadius`) and the
+components built from them (`AppText`, `CardView`, `TagView`, `PrimaryButton`) into
+`DesignSystem/` — one target-internal folder, deliberately named for what the sequel will one
+day make a package. **Prove it — honestly:** tokens are looked at, not asserted on; the
+feedback tool is a **preview catalog** rendering every token and component (the embryo of the
+sequel's Catalog app). **Codify it:** `add-design-token` / `add-component` — new visual
+values enter through tokens, components build only from tokens, every component registers in
+the catalog; `CLAUDE.md` gains the rule that bans raw hex/padding literals in feature code.
+The AI that invented a blue now refuses to. **Ledger:** the views stop defining the app's
+look. **Trap:** a track detail screen just got approved, and nobody owns the word "navigate."
 
 ### Ch 8 — Navigation Gets an Owner: The Coordinator  *(the C arrives)*
 **Beat:** tap a track → detail screen; a settings sheet; marketing wants a deep link to a
@@ -148,9 +200,10 @@ each other. **Extraction:** `AppCoordinator` (`@Observable`) owns the `Navigatio
 and sheet state per tab; views stop navigating and start *reporting intent* ("user tapped
 track") via closures the coordinator wires; destinations become an enum the coordinator maps
 to screens. View models present, views render, the coordinator steers — **MVVM-C is now
-complete and named.** **Prove it:** navigation logic is just logic now — tests assert that
-"user tapped track" appends the right destination to the path, that dismissal pops it, and
-that a deep-link URL parses to the right route. Navigation tests without a UI test in sight.
+complete and named.** **Prove it:** navigation is just logic now — tests assert that intents
+append the right destination, dismissal pops it, and a deep-link URL parses to the right
+route. **Codify it:** `add-route` — new destination = enum case + coordinator mapping + intent
+closure + route/deep-link tests; `CLAUDE.md` gains "views never construct destinations."
 **Ledger:** the views stop deciding where to go next. **Trap:** debugging is still
 `print("here 3")`, and the app has no idea what users do.
 
@@ -159,41 +212,51 @@ that a deep-link URL parses to the right route. Navigation tests without a UI te
 **Extraction:** four small protocols — `Logger`, `CrashReporter`, `AnalyticsTracker`,
 `FeatureFlagProvider` — with typed `AnalyticsEvent`/`FeatureFlag` vocabularies and console
 implementations, selected by a `MOCK_SERVICES` build flag so debug builds never ship real
-analytics. Services are *injected into view models and the coordinator through initializers*,
-same as the `SearchClient` — which quietly concentrates all construction in one place at app
-startup (the app struct + coordinator), a de facto assembly point the sequel will one day
-formalize. **Prove it:** the spy pattern — a `SpyAnalyticsTracker` records events, and tests
-assert the view model tracks a search and logs a failure. Side effects become assertions, and
-the typed event vocabulary means a typo can't invent a new event. **Ledger:** the views and
-view models stop owning side effects. **Trap:** the `.xcodeproj` just caused its first merge
-conflict.
+analytics. Services are *injected through initializers*, same as the `SearchClient` — which
+quietly concentrates construction at app startup (the app struct + coordinator), a de facto
+assembly point the sequel will one day formalize. **Prove it:** the spy pattern — a
+`SpyAnalyticsTracker` records events; tests assert the view model tracks a search and logs a
+failure. **Codify it:** `add-analytics-event` / `add-service` — events are typed (a typo
+can't invent one), side effects arrive by injection, every new event ships with a spy test.
+**Ledger:** the views and view models stop owning side effects. **Trap:** the `.xcodeproj`
+just caused its first merge conflict.
 
 ### Ch 10 — Project Hygiene: The Invisible Structure
 **Beat:** a second developer is about to join; the founder cleans house. **Extraction:** the
 project file becomes code — XcodeGen and `project.yml` (where `MOCK_SERVICES` visibly lives);
 folder layout as the app's table of contents; `Utilities/` for the boring helpers. **Prove
 it:** the suite built across Chs 2–9 becomes infrastructure — one scheme runs every test in
-seconds, wired into CI on every push; the second developer's first PR is judged by it before
-a human ever looks. And the book's restraint sidebar: *"you may be itching for repositories,
-use cases, and modules — hold that thought."* At this size, view models talking to the client
-directly is a feature, not a failure. **Ledger:** the last row retires. **Trap:** none the
+seconds, wired into CI on every push. **Codify it:** `update-project` (how targets, schemes,
+and flags change — through `project.yml`, never through Xcode's GUI) — and the payoff of the
+whole device: the skill library **is** the onboarding. The second developer's assistant reads
+the same `CLAUDE.md` and skills, and their first PR arrives in the house style with tests
+attached, judged by CI before a human ever looks. Conventions no longer live in the
+founder's head. Plus the restraint sidebar: *"you may be itching for repositories, use cases,
+and modules — hold that thought."* **Ledger:** the last row retires. **Trap:** none the
 founder can see. That's the point.
 
 ### Epilogue — The Well-Built Monolith and Its Limits
 Tour the finished app: views render, view models present, the coordinator steers, services
-hide behind contracts, the project file is text, and every seam earned its tests the day it
-was cut. The ledger is empty; the suite runs in seconds; a new developer finds anything in
-minutes. Then the turn: every boundary in this app is a *convention*. Nothing stops
-tomorrow's tired developer from calling the API client inside a view or importing a feature
-sideways — the compiler has no opinion about your folders. Measure the baseline scoreboard
-(clean build, color-change loop, test time) and hand off: the team is about to grow from two
-to twenty, and making these boundaries *rules* is the story of **The Modular iOS Playbook**.
+hide behind contracts, the project file is text, every seam earned its tests the day it was
+cut, and every convention lives in a skill the whole team — human and AI — builds with. The
+ledger is empty; the suite runs in seconds; a new developer ships in the house style on day
+one. Then the turn: every boundary in this app is still a *convention*. A skill is a
+convention with a helper; tests are a convention with an alarm; but nothing *stops* tomorrow's
+tired developer — or a confidently wrong AI — from calling the client inside a view or
+importing a feature sideways. The compiler has no opinion about your folders, your rulebook,
+or your skills. Measure the baseline scoreboard (clean build, color-change loop, test time)
+and hand off: the team is about to grow from two to twenty, and turning these conventions
+into *rules the compiler enforces* is the story of **The Modular iOS Playbook**.
 
 ## End state (the sequel's new starting line)
 
 ```text
 iTunesSearchApp/
 ├── project.yml
+├── CLAUDE.md           # the rulebook, grown one law per chapter
+├── .claude/skills/     # add-model, add-endpoint, extract-subview, add-view-model,
+│                       # add-feature, add-design-token, add-component, add-route,
+│                       # add-analytics-event, add-service, update-project
 ├── Sources/
 │   ├── App/            # @main, RootView (TabView), AppCoordinator
 │   ├── Models/         # Track, Podcast
@@ -211,10 +274,10 @@ iTunesSearchApp/
 ## Companion code (not built yet)
 
 Mirror the Playbook's structure: one runnable folder per chapter (`prequel/ch01-one-file-app`
-… `prequel/ch10-project-hygiene`), each the end state of its chapter — including its tests,
-so the suite visibly grows folder by folder. The defining acceptance test of the entire
-two-book arc: the prequel's final folder and the revised Playbook's `code/ch01` are the same
-app —
+… `prequel/ch10-project-hygiene`), each the end state of its chapter — including its tests
+**and its skills**, so both the suite and the skill library visibly grow folder by folder.
+The defining acceptance test of the entire two-book arc: the prequel's final folder and the
+revised Playbook's `code/ch01` are the same app —
 
 ```bash
 diff -r prequel/ch10-project-hygiene code/ch01-the-monolith   # → empty (after the Playbook revision)
