@@ -7,6 +7,6 @@ import Foundation
 /// the implementation depends on the domain, never the other way around.
 public protocol MediaSearchRepository: Sendable {
     func searchMusic(term: String) async throws -> [Track]
+    func searchPodcasts(term: String) async throws -> [Podcast]
     func searchMovies(term: String) async throws -> [Movie]
-    func searchAudiobooks(term: String) async throws -> [Audiobook]
 }

@@ -3,135 +3,172 @@ title: "Chapter 6: The Composition Root"
 weight: 6
 ---
 
-**The pain this chapter attacks: a perfectly decoupled app that can't actually run.** We've hidden every concrete behind a protocol — which means *nothing* is wired, and if each feature wires its own dependencies the spaghetti creeps back. Someone has to instantiate the real client and connect the routes, in exactly one place. By the end of this chapter, swapping an implementation app-wide is a one-file change and no feature module moves.
+**The pain this chapter attacks: a perfectly decoupled app that wires itself back together, badly, in three different places.** Chapter 5 hid every concrete type behind a protocol — which means *something* still has to instantiate the real repositories and services and hand them to the right screens. Right now that something is `RootView`, copied by hand into every preview and into `FeatureLibraryDemo` too. By the end of this chapter, the entire object graph is buildable by reading one file, and swapping mock for real is a one-line change in exactly one place.
 
-In [Chapter 5]({{< relref "05-dependency-inversion" >}}), we established strict boundaries. Feature modules only depend on abstractions (protocols) defined in an `Interfaces` module. Concrete implementations, like our `CoreDataLayer`'s `APIClient`, are hidden away.
+## Where We Are
 
-But an interface cannot execute code. At some point, the app must instantiate the concrete `iTunesAPIClient` and hand it to the `LibraryViewModel`. Furthermore, when a user taps a movie soundtrack in `FeatureMusicSearch`, *someone* has to know how to instantiate the `MovieDetailViewController` to push it onto the navigation stack.
-
-This "someone" is the **Composition Root**.
-
-## What is a Composition Root?
-
-The Composition Root is a unique location in an application where modules are composed together. It is the only place in the entire application that knows about *every* module.
-
-In an iOS app, the Composition Root is almost always located in the main app target (e.g., our `iTunesSearchApp` target).
+[Chapter 5]({{< relref "05-dependency-inversion" >}}) left the module graph in good shape: `FeatureMusicSearch`, `FeaturePodcasts`, `FeatureMovies`, and `FeatureLibrary` each depend only on `Domain`, `DesignSystem`, and — for Library's cross-feature navigation — `AppInterfaces`. No feature imports another feature, and no feature imports `Infrastructure`. The compile errors that ended Chapter 5 were the honest cost of that boundary: every screen now takes protocols in its initializer (`MediaSearchRepository`, `LibraryRepository`, `AnalyticsTracker`, `CrashReporter`, `FeatureFlagProvider`, `LibraryRouter`), and *something* has to construct the concretes and pass them in.
 
 ```text
-               ┌───────────────────┐
-               │ iTunesSearchApp   │ <--- THE COMPOSITION ROOT
-               │ (Main App)        │
-               └─┬─────────┬─┘
-                 │         │
-                 ▼         ▼
-             (Imports Everything)
+                    ┌─────────────────────────────┐
+                    │        iTunesSearchApp       │
+                    └──┬────┬────┬────┬────┬────┬──┘
+                       │    │    │    │    │    │
+        ┌──────────────┘    │    │    │    │    └───────────────┐
+        ▼                   ▼    ▼    ▼    ▼                    ▼
+ FeatureMusicSearch  FeaturePodcasts FeatureMovies FeatureLibrary  Infrastructure
+        │                  │    │    │    │                     │
+        └───────┬──────────┴────┴──┬─┴────┘                     │
+                ▼                  ▼                            │
+          AppInterfaces ────▶   Domain   ◀──────────────────────┘
+                │
+                ▼
+          DesignSystem  ◀── (all features)      Catalog ──▶ DesignSystem
 ```
 
-Because `iTunesSearchApp` is the final executable that gets built and shipped to the App Store, it is perfectly acceptable for it to import `FeatureLibrary`, `FeatureMusicSearch`, `CoreDataLayer`, and `iTunesSearchInterfaces`.
+That "something" was `RootView` — the only place left that imports `Infrastructure` — plus an ad hoc `AppLibraryRouter` it wrote to satisfy `LibraryRouter`. It worked. It was also the trap Chapter 5 left open.
 
-## Step 1: Wiring up Dependencies
+## Pain: A Stop-the-Line Day
 
-Let's look at how the Composition Root creates the `LibraryViewController`.
+> **Tech lead:** I'm calling a stop-the-line day. Walk me through every place this app constructs an `ITunesSearchRepository`.
+>
+> **Sam (Search & Podcasts squad):** `RootView` builds one. Every SwiftUI preview for `MusicSearchScreen` and `PodcastsScreen` builds its own, usually with slightly different init arguments because whoever wrote the preview copy-pasted from a different screen. `FeatureLibraryDemo` builds a `CoreDataLibraryRepository` too, separately.
+>
+> **Priya (Library squad):** And none of those are guaranteed to be the *same* instance. If `RootView` and a preview ever needed to share state — which they don't today, but nothing stops it — we'd have two Core Data stacks pointed at the same store.
+>
+> **Tech lead:** That's the theoretical problem. Here's the real one. Somebody on the release build last week shipped a TestFlight build with `ConsoleAnalytics` still wired in — every tap event printed to the device console instead of going to the real vendor SDK, in what was supposed to be a release candidate. Not a huge deal by itself, except: which of the three files that construct `AnalyticsTracker` was the one somebody forgot to update when we swapped in the real SDK? `RootView`? One of the previews? Nobody could say for certain, because there's no single place that makes that call.
+>
+> **Deepa (Movies squad):** So the actual bug isn't "wrong analytics service" — it's "no single place decides which analytics service."
+>
+> **Tech lead:** Right. Find every file in this app that writes `ITunesSearchRepository()`, `CoreDataLibraryRepository()`, `ConsoleAnalytics()`, or `AppLibraryRouter(...)` and report back.
 
-```swift
-// In the Main iTunesSearchApp Target (e.g., inside a Coordinator or AppDependencyContainer)
+The count: `RootView` (four repositories/services plus a router), every preview across four feature screens (each rebuilding its own set, inconsistently), and `FeatureLibraryDemo` (a fifth, separate copy). Zero of those sites agree with each other by construction — only by developer discipline, which is exactly what broke last week.
 
-import UIKit
-import FeatureLibrary          // To access LibraryViewController
-import CoreDataLayer           // To access concrete iTunesAPIClient
-import iTunesSearchInterfaces  // To satisfy protocol requirements
+## Diagnosis: The Composition Root
 
-class AppFactory {
-    // 1. Instantiate the concrete dependency
-    let apiClient = iTunesAPIClient()
+The fix has a name: the **Composition Root** — exactly one place, as close to the app's entry point as possible, where the object graph is built. Everywhere else receives its dependencies through initializer parameters; nowhere else calls a concrete type's initializer. This isn't a new framework or a new abstraction — it's discipline about *where* dependency injection's plumbing lives, applied to code that was already using constructor injection since Chapter 5. Two pieces do the whole job:
 
-    func makeLibraryScreen() -> UIViewController {
-        // 2. Inject the concrete dependency into the ViewModel
-        // (iTunesAPIClient conforms to LibraryDataService in CoreDataLayer)
-        let viewModel = LibraryViewModel(dataService: apiClient)
+- **`AppFactory`** — the one type that imports every module. It owns the shared repository and service instances, and exposes one `make…()` method per feature screen.
+- **`AppRouter`** — implements `LibraryRouter` by asking the factory for a destination. It carries no logic of its own.
 
-        // 3. Create the view controller
-        return LibraryViewController(viewModel: viewModel)
-    }
-}
-```
+And Chapter 1's loop finally closes here. The `Services` enum and its `MOCK_SERVICES` flag — the facade every feature used to reach into directly for `Services.analytics`, back when everything lived in one target — never really went away; Chapter 4's extraction just made it unreachable from inside a feature package, so each screen grew its own inline construction instead (the very thing that caused this chapter's incident). `AppFactory` is where that decision belongs: mock vs. real is now a single default parameter, picked once, in one initializer.
 
-This pattern is called **Dependency Injection** (specifically, Constructor Injection). The `LibraryViewModel` never asks for an `iTunesAPIClient`; it is *given* one by the Composition Root.
+## Refactor
 
-## Step 2: Wiring up Navigation (Routing)
+In the order it actually happened:
 
-Now, let's solve the routing problem. `FeatureMusicSearch` needs to navigate to `MovieDetail`, but it only knows about the `MusicSearchRouter` protocol.
+1. **Create `Sources/App/CompositionRoot/`.** Two files: `AppFactory.swift` and `AppRouter.swift`.
+2. **`AppFactory` constructs every repository and service exactly once**, as stored properties, with the mock/real decision as an initializer default:
 
-The Composition Root will implement this protocol. A common pattern is to use **Coordinators**.
+   ```swift
+   @MainActor
+   final class AppFactory {
+       private let searchRepository: MediaSearchRepository
+       private let libraryRepository: LibraryRepository
+       private let analytics: AnalyticsTracker
+       private let crashReporter: CrashReporter
+       private let flags: FeatureFlagProvider
 
-```swift
-// In the Main iTunesSearchApp Target
+       init(
+           searchRepository: MediaSearchRepository = ITunesSearchRepository(),
+           libraryRepository: LibraryRepository = CoreDataLibraryRepository(),
+           analytics: AnalyticsTracker = ConsoleAnalytics(),
+           crashReporter: CrashReporter = ConsoleCrashReporter(),
+           flags: FeatureFlagProvider = {
+               #if MOCK_SERVICES
+               return LocalFeatureFlags([.newPodcastUI: true])
+               #else
+               return LocalFeatureFlags()
+               #endif
+           }()
+       ) { /* assign */ }
+   }
+   ```
 
-import UIKit
-import FeatureMusicSearch
-import FeatureMovieDetail
-import iTunesSearchInterfaces
+   This is the *entire* mock/real decision for the whole app, in one initializer. It closes the loop Chapter 1 opened: `Services` no longer exists anywhere in this codebase.
+3. **`AppFactory` grows one `make…()` per screen** (`makeMusicSearch()`, `makePodcasts()`, `makeMovies()`, `makeLibrary()`), each handing the shared instances to the screen's initializer, plus a `destination(for:)` that knows a saved movie opens `FeatureMovies`' `MovieDetailScreen` — the one piece of routing knowledge from Chapter 5's `AppLibraryRouter`, now living beside everything else it needs.
+4. **`AppRouter` implements `LibraryRouter`** by delegating straight to the factory:
 
-class MainCoordinator: MusicSearchRouter {
-    var navigationController: UINavigationController
-    let factory: AppFactory
+   ```swift
+   @MainActor
+   struct AppRouter: LibraryRouter {
+       let factory: AppFactory
+       func openSavedItem(_ item: SavedItem) -> AnyView {
+           factory.destination(for: item)
+       }
+   }
+   ```
 
-    init(navigationController: UINavigationController, factory: AppFactory) {
-        self.navigationController = navigationController
-        self.factory = factory
-    }
+   > **Sidebar:** `AppRouter` is SwiftUI's answer to UIKit's Coordinator — a small type that owns navigation decisions so a feature never has to know where it's navigating to.
+5. **`RootView` shrinks to a `TabView` of factory-made screens** — no imports of `Domain`, `Infrastructure`, `AppInterfaces`, or any feature package:
 
-    func start() {
-        // We pass 'self' as the router because MainCoordinator
-        // conforms to MusicSearchRouter
-        let searchVM = MusicSearchViewModel(router: self)
-        let searchVC = MusicSearchViewController(viewModel: searchVM)
-        navigationController.pushViewController(searchVC, animated: false)
-    }
+   ```swift
+   struct RootView: View {
+       let factory: AppFactory
+       var body: some View {
+           TabView {
+               factory.makeMusicSearch().tabItem { Label("Music", systemImage: "music.note") }
+               factory.makePodcasts().tabItem { Label("Podcasts", systemImage: "mic") }
+               factory.makeMovies().tabItem { Label("Movies", systemImage: "film") }
+               factory.makeLibrary().tabItem { Label("Library", systemImage: "books.vertical") }
+           }
+       }
+   }
+   ```
+6. **`iTunesSearchApp` owns the one `AppFactory` for the app's lifetime** and hands it to `RootView` — the Composition Root, built as close to `@main` as this codebase gets.
+7. **`FeatureLibraryDemo` gets its own composition root** — a ~10-line `DemoCompositionRoot` that is the *only* place in that target constructing a `CoreDataLibraryRepository` or a stub router. Previews that need a screen now call through a factory (or a preview-only fake) instead of constructing concretes inline.
 
-    // Implementing the protocol requirement from FeatureMusicSearch
-    func routeToMovieDetail(for movieID: String) {
-        // The Coordinator knows about the Detail module!
-        let detailVC = factory.makeMovieDetailScreen(movieID: movieID)
-        navigationController.pushViewController(detailVC, animated: true)
-    }
-}
-```
-
-## The Beauty of the Composition Root
-
-By pushing all instantiation and routing logic to the very top of the application structure, we achieve true modularity.
-
--   **Plug and Play:** If we want to replace `iTunesAPIClient` with a new `GraphQLClient` next year, we only change the code in *one place*: the `AppFactory` in the Composition Root. The feature modules do not change.
--   **A/B Testing:** The Composition Root can easily decide to inject `FeatureMovieDetailV1` for 50% of users and `FeatureMovieDetailV2` for the other 50%.
--   **Demo Apps:** Remember the Preview Apps from Chapter 4? A Demo App is simply a *miniature Composition Root*. It injects mock data services instead of the real `iTunesAPIClient`.
-
-## Checkpoint: Scattered Wiring, Relieved
-
-You can now swap a concrete implementation across the entire app by editing one file — the `AppFactory` — and no feature module changes at all.
+## Verify
 
 | What you do | Before this chapter | After this chapter |
 | --- | --- | --- |
-| Replace `iTunesAPIClient` → `GraphQLClient` | Edit every call site | Edit one file; features change: 0 |
-| A/B two versions of a screen | Conditionals scattered in features | One decision at the root |
-| Find where the app is wired together | Spread across features | A single composition root |
+| Find every repository/service construction | `RootView`, every preview, `FeatureLibraryDemo` — five-plus sites, disagreeing | `Sources/App/CompositionRoot/AppFactory.swift` — one site (plus the demo's own mini-root) |
+| Swap mock analytics for a real vendor SDK | Find and edit every construction site by hand | Edit one default parameter in `AppFactory.init` |
+| `Services` enum / `MOCK_SERVICES` flag | Alive since Chapter 1, unreachable from features since Chapter 4 | Gone — dissolved into `AppFactory` |
+| Read the whole object graph | Not possible from one file | `AppFactory.swift`, top to bottom |
 
-*Illustrative; trace it in [`code/ch06-composition-root`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch06-composition-root) — `AppFactory` is the only type that imports every module.*
+*Illustrative; verify mechanically in [`code/ch06-composition-root`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch06-composition-root):*
 
-## The Next Crack: Features That Grow Into Monoliths
+```bash
+grep -rnE 'ITunesSearchRepository\(\)|CoreDataLibraryRepository\(\)|ConsoleAnalytics\(\)|ConsoleCrashReporter\(\)|LocalFeatureFlags\(' \
+  --include='*.swift' . | grep -v CompositionRoot
+# 0 hits outside Sources/App/CompositionRoot and the demo app's own mini-root
+```
 
-For many teams, reaching this level of modularity is enough. However, for massive applications (hundreds of developers), even a single feature module can swell into a mini-monolith — caching, animations, analytics, and logic all recompiling together on every tweak. In our final chapter, we look at how to decompose a feature into **micro-features**.
+## Try It Yourself
+
+1. Open `code/ch06-composition-root/DemoApps/FeatureLibraryDemo/CompositionRoot.swift`.
+2. Swap `PreviewRouter` for a fake `LibraryRouter` whose `openSavedItem(_:)` just `print()`s the tapped item's title and returns an empty view.
+3. Run the `FeatureLibraryDemo` scheme. Save an item, tap it — watch the console. You never touched `AppFactory`, `AppRouter`, or any other feature package: the whole demo app is drivable through its own ten-line composition root.
+
+## "Is This Worth It Yet?" — The Cheapest Chapter in the Book
+
+The composition root pattern has a well-known failure mode: `AppFactory` tends toward a god object as the app grows, because every new feature adds another `make…()` method and another constructor argument to keep straight. The mitigations are boring on purpose — split it into per-feature factory extensions (`extension AppFactory { func makeMovies() -> some View { ... } }` in a file next to `FeatureMovies`'s own code, if it ever gets that big) and keep the file declarative: construction only, no business logic, no conditionals beyond the mock/real switch. At this app's size, none of that is needed yet — one file, under a hundred lines, reads top to bottom in one sitting. This chapter costs almost nothing (move code, don't invent abstractions) and pays back immediately (the stop-the-line incident becomes structurally impossible). It's the cheapest chapter in the book.
+
+## The Next Crack: Now We Test the Architecture
+
+The architecture is "done," in the sense that every dependency flows one direction and exactly one file builds the whole graph. So naturally, the business immediately tests it: leadership wants **Audiobooks** demoed at the offsite in a week, and the analytics `AppFactory` now reports honestly (no more console/mock mixups) says **Podcasts** is under 1% of sessions. Can this graph add a feature fast and delete one safely — proving the last five chapters of work were worth it, or exposing what they missed? Chapter 7 finds out.
 
 ## Hands-On
 
-[`code/ch06-composition-root`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch06-composition-root) has the same module graph as Chapter 5, but the wiring moves into `Sources/App/CompositionRoot/`:
+[`code/ch06-composition-root`](https://github.com/mobiledge/the-modular-ios-playbook/tree/main/code/ch06-composition-root) is `code/ch05-dependency-inversion` plus exactly this chapter's delta — diff the two folders to see it. Same module graph as Chapter 5; `CompositionRoot` is a folder inside the app target's own box, not a new module. Schemes:
 
-- `AppFactory` is the single type that imports every module, owns the repository instances, and builds each screen with dependencies injected (`makeMusicSearch()`, `makeLibrary()`, …).
-- `AppRouter` implements `LibraryRouter` by delegating to the factory — the SwiftUI equivalent of a Coordinator.
-- `RootView` becomes trivial: it just calls `factory.make…()` for each tab and knows nothing about repositories or routers.
+- **`iTunesSearchApp`** — the full app (Music, Podcasts, Movies, Library tabs), behavior identical to Chapter 5. Save a movie in Movies, tap it in Library — same `MovieDetailScreen`, now built by `AppFactory`.
+- **`Catalog`** — the design system in isolation, unchanged since Chapter 2.
+- **`FeatureLibraryDemo`** — Library alone, built by its own `DemoCompositionRoot`.
 
-The `FeatureLibraryDemo` target is, as the chapter notes, a miniature composition root: it injects a real repository and a stub router exactly as `AppFactory` does.
+```bash
+cd code/ch06-composition-root
+xcodegen generate
+open iTunesSearchApp.xcodeproj   # choose iTunesSearchApp, Catalog, or FeatureLibraryDemo
+
+swift test --package-path Packages/Domain
+```
+
+## Checkpoint: Scattered Wiring, Relieved
+
+`AppFactory` is now the only type in the app that imports every module and constructs a concrete repository or service; `AppRouter` is the only place that decides what a saved movie opens. `RootView` doesn't know either exists beyond calling `factory.make…()`. Chapter 1's `Services` enum and its `MOCK_SERVICES` flag are gone — dissolved into `AppFactory`'s initializer. What's untested is whether this graph holds up under real product pressure: adding a feature under deadline, and deleting one without breaking the rest.
 
 ---
 
-> **Next:** [Chapter 7: Advanced Granularity & Micro-Features]({{< relref "07-advanced-granularity" >}})
+> **Next:** [Chapter 7: The Proof: Add One, Delete One]({{< relref "07-advanced-granularity" >}})

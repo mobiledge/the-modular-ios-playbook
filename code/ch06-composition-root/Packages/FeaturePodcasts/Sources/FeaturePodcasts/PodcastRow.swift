@@ -2,16 +2,14 @@ import SwiftUI
 import DesignSystem
 import Domain
 
-/// A single row in the music list.
-///
-/// The whole row is a `DSMediaRow` from the design system, plus a
-/// save-to-Library affordance. The row talks to the domain's
-/// `LibraryUseCase` — which owns the "don't save duplicates" rule — never
-/// directly to Core Data. The concrete `LibraryRepository` is injected from
+/// A single row in the podcasts list. Deliberately parallel to `TrackRow`,
+/// including the save-to-Library affordance: the whole row is one
+/// `DSMediaRow`, and the row talks to the domain's `LibraryUseCase` rather
+/// than Core Data directly. The concrete `LibraryRepository` is injected from
 /// the caller instead of constructed here, since this package can no longer
 /// import `Infrastructure`.
-struct TrackRow: View {
-    let track: Track
+struct PodcastRow: View {
+    let podcast: Podcast
     let libraryRepository: LibraryRepository
 
     private var library: LibraryUseCase { LibraryUseCase(repository: libraryRepository) }
@@ -19,10 +17,10 @@ struct TrackRow: View {
 
     var body: some View {
         DSMediaRow(
-            title: track.name,
-            subtitle: track.artist,
-            caption: track.releaseDate?.mediumString,
-            artworkURL: track.artworkURL
+            title: podcast.name,
+            subtitle: podcast.artist,
+            caption: podcast.releaseDate?.mediumString,
+            artworkURL: podcast.artworkURL
         ) {
             Button(action: toggleSave) {
                 Image(systemName: isSaved ? "checkmark.circle.fill" : "plus.circle")
@@ -32,21 +30,21 @@ struct TrackRow: View {
             .buttonStyle(.plain)
         }
         .onAppear {
-            isSaved = library.isSaved(id: track.id, mediaType: .music)
+            isSaved = library.isSaved(id: podcast.id, mediaType: .podcast)
         }
     }
 
     private func toggleSave() {
         if isSaved {
-            library.remove(id: track.id, mediaType: .music)
+            library.remove(id: podcast.id, mediaType: .podcast)
         } else {
             library.save(
                 SavedItem(
-                    id: track.id,
-                    title: track.name,
-                    subtitle: track.artist,
-                    artworkURL: track.artworkURL,
-                    mediaType: .music,
+                    id: podcast.id,
+                    title: podcast.name,
+                    subtitle: podcast.artist,
+                    artworkURL: podcast.artworkURL,
+                    mediaType: .podcast,
                     savedAt: Date()
                 )
             )

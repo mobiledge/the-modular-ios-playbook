@@ -1,12 +1,18 @@
 # XcodeGen project specification — Chapter 6: The Composition Root.
 #
+# Generate the .xcodeproj with:
+#     brew install xcodegen   # one time
 #     cd code/ch06-composition-root
 #     xcodegen generate
 #     open iTunesSearchApp.xcodeproj
 #
-# Same module graph as Chapter 5. The difference is in the app target: all
-# wiring now lives in a dedicated Composition Root (AppFactory + AppRouter),
-# and RootView simply asks the factory to build each screen.
+# The module graph is unchanged from Chapter 5 (FeatureMusicSearch,
+# FeaturePodcasts, FeatureMovies, FeatureLibrary; Domain, DesignSystem,
+# AppInterfaces, Infrastructure) — this chapter is entirely about WHERE
+# construction happens, not what exists. All of it now lives in
+# `Sources/App/CompositionRoot/{AppFactory,AppRouter}`; `RootView` is a
+# trivial TabView over factory-made screens, and `FeatureLibraryDemo` gets
+# its own tiny composition root.
 
 name: iTunesSearchApp
 
@@ -22,6 +28,7 @@ settings:
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 
+# Local Swift packages, referenced by path.
 packages:
   DesignSystem:
     path: Packages/DesignSystem
@@ -33,10 +40,10 @@ packages:
     path: Packages/AppInterfaces
   FeatureMusicSearch:
     path: Packages/FeatureMusicSearch
+  FeaturePodcasts:
+    path: Packages/FeaturePodcasts
   FeatureMovies:
     path: Packages/FeatureMovies
-  FeatureAudiobooks:
-    path: Packages/FeatureAudiobooks
   FeatureLibrary:
     path: Packages/FeatureLibrary
 
@@ -53,19 +60,46 @@ targets:
       - package: Infrastructure
       - package: AppInterfaces
       - package: FeatureMusicSearch
+      - package: FeaturePodcasts
       - package: FeatureMovies
-      - package: FeatureAudiobooks
       - package: FeatureLibrary
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.playbook.iTunesSearchApp
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
+        # Let Xcode synthesize Info.plist so there is no file to hand-maintain.
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
 
+  # A standalone catalog app that imports ONLY the DesignSystem. Designers and
+  # developers can run this to review components in isolation from the app's
+  # business logic and network — one of the big payoffs of the extraction.
+  Catalog:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Catalog
+    dependencies:
+      - package: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.Catalog
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+
+  # This chapter's "preview app": compiles only FeatureLibrary and its
+  # dependencies (Domain, DesignSystem, AppInterfaces) — never
+  # FeatureMusicSearch, FeaturePodcasts, or FeatureMovies. It also links
+  # Infrastructure directly, to construct a real Core Data repository —
+  # it is a miniature composition root. The Library squad can build and run
+  # this without booting the rest of the app.
   FeatureLibraryDemo:
     type: application
     platform: iOS
@@ -80,23 +114,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.playbook.FeatureLibraryDemo
-        TARGETED_DEVICE_FAMILY: "1,2"
-        CODE_SIGN_STYLE: Automatic
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-
-  DesignSystemCatalog:
-    type: application
-    platform: iOS
-    deploymentTarget: "17.0"
-    sources:
-      - path: Catalog
-    dependencies:
-      - package: DesignSystem
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.DesignSystemCatalog
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES

@@ -1,28 +1,18 @@
 import SwiftUI
-import Domain
-import Infrastructure
-import AppInterfaces
-import FeatureLibrary
 
-/// A "preview app" for the Library feature — and a perfect illustration that a
-/// demo app is just a *miniature composition root*. It injects a real Core Data
-/// repository and a trivial router (no other features required).
+/// A "preview app" for the Library feature — and a perfect illustration that
+/// a demo app is just a *miniature composition root*. It compiles
+/// `FeatureLibrary` and its dependencies (`Domain`, `DesignSystem`,
+/// `AppInterfaces`) — not `FeatureMusicSearch`, `FeaturePodcasts`, or
+/// `FeatureMovies` — so it builds in seconds and lets the Library squad
+/// iterate on their UI without booting the rest of the app. All the
+/// construction that makes that possible lives in `DemoCompositionRoot`,
+/// this demo's own ~10-line composition root, not here.
 @main
 struct FeatureLibraryDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            LibraryView(
-                libraryRepository: CoreDataLibraryRepository(),
-                router: PreviewRouter()
-            )
+            DemoCompositionRoot.makeLibraryScreen()
         }
-    }
-}
-
-/// The demo doesn't need real cross-feature navigation, so it stubs the router.
-@MainActor
-struct PreviewRouter: LibraryRouter {
-    func destination(for item: SavedItem) -> AnyView {
-        AnyView(Text(item.title).font(.title))
     }
 }

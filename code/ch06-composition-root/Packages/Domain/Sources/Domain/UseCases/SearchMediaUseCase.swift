@@ -18,14 +18,14 @@ public struct SearchMediaUseCase {
         return try await repository.searchMusic(term: term)
     }
 
+    public func podcasts(matching query: String) async throws -> [Podcast] {
+        guard let term = normalized(query) else { return [] }
+        return try await repository.searchPodcasts(term: term)
+    }
+
     public func movies(matching query: String) async throws -> [Movie] {
         guard let term = normalized(query) else { return [] }
         return try await repository.searchMovies(term: term)
-    }
-
-    public func audiobooks(matching query: String) async throws -> [Audiobook] {
-        guard let term = normalized(query) else { return [] }
-        return try await repository.searchAudiobooks(term: term)
     }
 
     /// Trims whitespace and treats an empty query as "no search".
