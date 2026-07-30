@@ -13,14 +13,15 @@ final class CoreDataStack {
 
     private static let entityName = "SavedItemEntity"
     private let container: NSPersistentContainer
+    private let logger: Logger = ConsoleLogger()
     private var context: NSManagedObjectContext { container.viewContext }
 
     private init() {
         let model = CoreDataStack.makeModel()
         container = NSPersistentContainer(name: "iTunesSearchApp", managedObjectModel: model)
-        container.loadPersistentStores { _, error in
+        container.loadPersistentStores { [logger] _, error in
             if let error {
-                Logger.log("Core Data failed to load store: \(error)")
+                logger.log("Core Data failed to load store: \(error)")
             }
         }
     }
@@ -110,7 +111,7 @@ final class CoreDataStack {
         do {
             try context.save()
         } catch {
-            Logger.log("Core Data save error: \(error)")
+            logger.log("Core Data save error: \(error)")
         }
     }
 }

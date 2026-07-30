@@ -4,8 +4,9 @@ import Domain
 import MusicSearchInterface
 
 /// Pure UI. It is generic over *any* `MusicSearchViewModeling`, so it can be
-/// driven by the real Logic module or by a mock in a preview — and it compiles
-/// without linking the Logic module at all.
+/// driven by the real `MusicSearchViewModel` from `MusicSearchLogic`, or by a
+/// preview/mock conformer — and it compiles without linking
+/// `MusicSearchLogic` at all.
 public struct MusicSearchScreen<ViewModel: MusicSearchViewModeling>: View {
     @StateObject private var viewModel: ViewModel
 

@@ -1,13 +1,21 @@
-# XcodeGen project specification — Chapter 7: Advanced Granularity.
+# XcodeGen project specification — Chapter 8: Advanced Granularity.
 #
-#     cd code/ch07-advanced-granularity
+# Generate the .xcodeproj with:
+#     brew install xcodegen   # one time
+#     cd code/ch08-advanced-granularity
 #     xcodegen generate
 #     open iTunesSearchApp.xcodeproj
 #
-# FeatureMusicSearch is now split into three micro-modules (Interface / UI /
-# Logic). The app links MusicSearchUI + MusicSearchLogic and the composition
-# root wires them. The other features remain single modules (split only when
-# the pain justifies it).
+# The module graph is unchanged from Chapter 7 with ONE internal split:
+# `FeatureMusicSearch` now ships three products — MusicSearchInterface,
+# MusicSearchLogic, MusicSearchUI — instead of one. The app links
+# MusicSearchUI + MusicSearchLogic directly and `AppFactory` wires the
+# Logic-built view model into the UI-built screen. FeatureMovies,
+# FeatureLibrary, and FeatureAudiobooks are deliberately left as single
+# modules — the restraint is the lesson. Construction still lives in
+# `Sources/App/CompositionRoot/{AppFactory,AppRouter}`; `RootView` is still a
+# trivial TabView over factory-made screens, and `FeatureLibraryDemo` still
+# gets its own tiny composition root.
 
 name: iTunesSearchApp
 
@@ -22,7 +30,15 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+  configs:
+    # Chapter 1's MOCK_SERVICES seed, still alive: Debug builds pick the mock
+    # feature-flag set via `AppFactory`'s `flags` default (see Chapter 6).
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG MOCK_SERVICES
+    Release:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
 
+# Local Swift packages, referenced by path.
 packages:
   DesignSystem:
     path: Packages/DesignSystem
@@ -36,10 +52,10 @@ packages:
     path: Packages/FeatureMusicSearch
   FeatureMovies:
     path: Packages/FeatureMovies
-  FeatureAudiobooks:
-    path: Packages/FeatureAudiobooks
   FeatureLibrary:
     path: Packages/FeatureLibrary
+  FeatureAudiobooks:
+    path: Packages/FeatureAudiobooks
 
 targets:
   iTunesSearchApp:
@@ -54,24 +70,51 @@ targets:
       - package: Infrastructure
       - package: AppInterfaces
       # FeatureMusicSearch now ships three products; the app links UI + Logic
-      # and wires them together in the composition root.
+      # and the composition root wires them together.
       - package: FeatureMusicSearch
         product: MusicSearchUI
       - package: FeatureMusicSearch
         product: MusicSearchLogic
       - package: FeatureMovies
-      - package: FeatureAudiobooks
       - package: FeatureLibrary
+      - package: FeatureAudiobooks
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.playbook.iTunesSearchApp
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
+        # Let Xcode synthesize Info.plist so there is no file to hand-maintain.
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
 
+  # A standalone catalog app that imports ONLY the DesignSystem. Designers and
+  # developers can run this to review components in isolation from the app's
+  # business logic and network — one of the big payoffs of the extraction.
+  Catalog:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Catalog
+    dependencies:
+      - package: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.Catalog
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+
+  # This chapter's "preview app": compiles only FeatureLibrary and its
+  # dependencies (Domain, DesignSystem, AppInterfaces) — never
+  # FeatureMusicSearch, FeatureMovies, or FeatureAudiobooks. It also links
+  # Infrastructure directly, to construct a real Core Data repository —
+  # it is a miniature composition root. The Library squad can build and run
+  # this without booting the rest of the app.
   FeatureLibraryDemo:
     type: application
     platform: iOS
@@ -86,23 +129,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.playbook.FeatureLibraryDemo
-        TARGETED_DEVICE_FAMILY: "1,2"
-        CODE_SIGN_STYLE: Automatic
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-
-  DesignSystemCatalog:
-    type: application
-    platform: iOS
-    deploymentTarget: "17.0"
-    sources:
-      - path: Catalog
-    dependencies:
-      - package: DesignSystem
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.DesignSystemCatalog
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES

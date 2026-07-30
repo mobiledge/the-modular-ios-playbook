@@ -147,4 +147,4 @@ Audiobooks shipped in a day, following a template that needed no invention. Podc
 
 ---
 
-> **Next:** [Chapter 8: Advanced Granularity & Micro-Features]({{< relref "08-advanced-granularity" >}})
+> **Next:** [Chapter 8: Advanced Granularity — and When to Stop]({{< relref "08-advanced-granularity" >}})

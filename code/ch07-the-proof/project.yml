@@ -27,6 +27,13 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+  configs:
+    # Chapter 1's MOCK_SERVICES seed, still alive: Debug builds pick the mock
+    # feature-flag set via `AppFactory`'s `flags` default, below.
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG MOCK_SERVICES
+    Release:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
 
 # Local Swift packages, referenced by path.
 packages:

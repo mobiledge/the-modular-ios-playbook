@@ -37,7 +37,8 @@ object graph is built, as close to `@main` as possible:
   is now a single default parameter in `AppFactory.init`.
 - **`AppRouter`** — implements `LibraryRouter` by delegating to the factory
   that built it. It owns no logic of its own; it's the thing `FeatureLibrary`
-  actually holds. (`AppRouter` is SwiftUI's answer to UIKit's Coordinator.)
+  actually holds. (`AppRouter` plays the role SwiftUI needs in place of
+  UIKit's imperative, push-based navigation.)
 
 Chapter 1's `Services` enum — the global facade every feature used to reach
 into directly for `Services.analytics`, `Services.crashReporter`,

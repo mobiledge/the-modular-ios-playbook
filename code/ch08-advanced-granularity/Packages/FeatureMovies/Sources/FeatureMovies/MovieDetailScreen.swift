@@ -2,17 +2,20 @@ import SwiftUI
 import DesignSystem
 import Domain
 
-/// Public so the Composition Root can build it for cross-feature navigation
-/// (e.g. tapping a saved movie in the Library). The library repository is injected.
-public struct MovieDetailView: View {
+/// Movies owns its own detail screen — "MovieDetail" is never a standalone
+/// module. This type is `public` for a second reason beyond `MoviesScreen`
+/// pushing it: the app target's `AppLibraryRouter` builds it directly so a
+/// saved movie tapped in Library opens the same screen, without
+/// `FeatureLibrary` ever importing `FeatureMovies`.
+public struct MovieDetailScreen: View {
     let movie: Movie
-    let library: LibraryRepository
+    private let library: LibraryUseCase
 
     @State private var isSaved = false
 
-    public init(movie: Movie, library: LibraryRepository) {
+    public init(movie: Movie, libraryRepository: LibraryRepository) {
         self.movie = movie
-        self.library = library
+        self.library = LibraryUseCase(repository: libraryRepository)
     }
 
     public var body: some View {

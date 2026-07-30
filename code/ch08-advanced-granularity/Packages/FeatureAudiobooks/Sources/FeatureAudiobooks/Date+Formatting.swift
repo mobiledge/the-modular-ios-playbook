@@ -1,6 +1,6 @@
 import Foundation
 
-public extension DateFormatter {
+extension DateFormatter {
     /// Shared, cached medium-style date formatter (formatters are expensive to create).
     static let mediumDate: DateFormatter = {
         let formatter = DateFormatter()
@@ -10,7 +10,7 @@ public extension DateFormatter {
     }()
 }
 
-public extension Date {
+extension Date {
     /// e.g. "Sep 27, 2005"
     var mediumString: String {
         DateFormatter.mediumDate.string(from: self)

@@ -1,10 +1,13 @@
 import Foundation
+import Combine
 import Domain
 import MusicSearchInterface
 
-/// Pure logic. It conforms to the Interface's view-model contract and depends on
-/// injected domain repositories. It links no SwiftUI and can be unit-tested
-/// without compiling a single view.
+/// Pure logic: it conforms to `MusicSearchInterface`'s view-model contract
+/// and depends only on injected Domain use cases and service contracts. It
+/// imports no SwiftUI and can be unit-tested without compiling a single view
+/// — a UI-only PR in `MusicSearchUI` never recompiles, let alone re-runs,
+/// this target's tests.
 @MainActor
 public final class MusicSearchViewModel: MusicSearchViewModeling {
     @Published public var query: String
@@ -13,24 +16,33 @@ public final class MusicSearchViewModel: MusicSearchViewModeling {
     @Published public private(set) var errorMessage: String?
 
     private let searchUseCase: SearchMediaUseCase
-    private let library: LibraryRepository
+    private let library: LibraryUseCase
+    private let analytics: AnalyticsTracker
+    private let crashReporter: CrashReporter
 
     public init(
         query: String = "Jack Johnson",
         searchRepository: MediaSearchRepository,
-        libraryRepository: LibraryRepository
+        libraryRepository: LibraryRepository,
+        analytics: AnalyticsTracker,
+        crashReporter: CrashReporter
     ) {
         self.query = query
         self.searchUseCase = SearchMediaUseCase(repository: searchRepository)
-        self.library = libraryRepository
+        self.library = LibraryUseCase(repository: libraryRepository)
+        self.analytics = analytics
+        self.crashReporter = crashReporter
     }
 
     public func search() async {
+        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isLoading = true
         errorMessage = nil
+        analytics.track(AnalyticsEvent("music_search", ["term": query]))
         do {
             tracks = try await searchUseCase.music(matching: query)
         } catch {
+            crashReporter.record(error, context: ["feature": "music_search"])
             errorMessage = "Failed to load: \(error.localizedDescription)"
         }
         isLoading = false

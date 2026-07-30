@@ -2,9 +2,13 @@ import Foundation
 import Combine
 import Domain
 
-/// The contract between the UI and the Logic. Both micro-modules depend on this
-/// interface; neither depends on the other. The UI renders whatever conforms to
-/// this; the Logic provides a conforming view model.
+/// The contract between `MusicSearchUI` and `MusicSearchLogic`. Both
+/// micro-targets depend on this protocol; neither depends on the other.
+///
+/// `MusicSearchUI` renders whatever conforms to this — the real
+/// `MusicSearchViewModel` from `MusicSearchLogic`, or a preview/mock
+/// conformer — without ever linking `MusicSearchLogic`. `MusicSearchLogic`
+/// implements it without ever linking SwiftUI.
 @MainActor
 public protocol MusicSearchViewModeling: ObservableObject {
     var query: String { get set }
