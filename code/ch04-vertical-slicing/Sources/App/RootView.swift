@@ -1,27 +1,31 @@
 import SwiftUI
 import DesignSystem
 import FeatureMusicSearch
-import FeatureMovies
-import FeatureAudiobooks
+import FeaturePodcasts
 import FeatureLibrary
 
-/// The app target is now thin: it only *composes* the feature modules into a
-/// tab bar. Each tab is the public entry point of an independent feature package.
+/// The app's root tab bar, composing the three feature packages.
+///
+/// `RootView` still knows about every feature directly — it imports and
+/// instantiates `MusicSearchScreen`, `PodcastsScreen`, and `LibraryScreen` by
+/// name. There is no composition root to isolate this wiring from the
+/// features themselves; that's the Composition Root chapter, still ahead.
 struct RootView: View {
     var body: some View {
         TabView {
-            MusicSearchView()
+            MusicSearchScreen()
                 .tabItem { Label("Music", systemImage: "music.note") }
 
-            MoviesView()
-                .tabItem { Label("Movies", systemImage: "film") }
+            PodcastsScreen()
+                .tabItem { Label("Podcasts", systemImage: "mic") }
 
-            AudiobooksView()
-                .tabItem { Label("Audiobooks", systemImage: "headphones") }
-
-            LibraryView()
+            LibraryScreen()
                 .tabItem { Label("Library", systemImage: "books.vertical") }
         }
         .tint(DSColors.brand)
     }
+}
+
+#Preview {
+    RootView()
 }

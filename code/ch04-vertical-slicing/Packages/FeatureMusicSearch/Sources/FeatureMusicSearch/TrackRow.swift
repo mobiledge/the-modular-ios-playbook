@@ -3,11 +3,16 @@ import DesignSystem
 import Domain
 import Infrastructure
 
-/// Internal to the feature — the app never sees this type.
+/// A single row in the music list.
+///
+/// The whole row is a `DSMediaRow` from the design system, plus a
+/// save-to-Library affordance. The row talks to the domain's
+/// `LibraryUseCase` — which owns the "don't save duplicates" rule — never
+/// directly to Core Data.
 struct TrackRow: View {
     let track: Track
 
-    private let library: LibraryRepository = CoreDataLibraryRepository()
+    private let library = LibraryUseCase(repository: CoreDataLibraryRepository())
     @State private var isSaved = false
 
     var body: some View {

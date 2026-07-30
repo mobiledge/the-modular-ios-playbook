@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "FeatureLibrary",
+    name: "FeaturePodcasts",
     platforms: [
         .iOS(.v17)
     ],
     products: [
-        .library(name: "FeatureLibrary", targets: ["FeatureLibrary"])
+        .library(name: "FeaturePodcasts", targets: ["FeaturePodcasts"])
     ],
     dependencies: [
         // The Infrastructure edge here is a deliberate flaw: this feature
-        // package depends on the concrete Core Data layer directly, instead
+        // package depends on the concrete networking layer directly, instead
         // of a protocol it doesn't own. Chapter 5 fixes it.
         .package(path: "../DesignSystem"),
         .package(path: "../Domain"),
@@ -19,7 +19,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "FeatureLibrary",
+            name: "FeaturePodcasts",
             dependencies: ["DesignSystem", "Domain", "Infrastructure"]
         )
     ]

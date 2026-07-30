@@ -4,6 +4,5 @@ import Foundation
 /// any of them are fetched or stored.
 public enum MediaType: String, CaseIterable, Hashable, Sendable {
     case music
-    case movie
-    case audiobook
+    case podcast
 }

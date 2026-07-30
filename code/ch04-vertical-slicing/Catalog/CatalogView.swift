@@ -11,6 +11,7 @@ struct CatalogView: View {
                 Section("Buttons") { buttons }
                 Section("Tags") { tags }
                 Section("Card") { card }
+                Section("Section Header") { sectionHeader }
                 Section("Media Row") { mediaRows }
             }
             .navigationTitle("Design System")
@@ -84,6 +85,15 @@ struct CatalogView: View {
                 DSText("Card Title", style: .headline)
                 DSText("Cards group related content on a raised surface.", style: .callout)
             }
+        }
+        .padding(.vertical, DSSpacing.xs)
+    }
+
+    // MARK: - Section Header
+
+    private var sectionHeader: some View {
+        DSSectionHeader("Recently Played") {
+            DSText("See All", style: .callout, color: DSColors.brand)
         }
         .padding(.vertical, DSSpacing.xs)
     }

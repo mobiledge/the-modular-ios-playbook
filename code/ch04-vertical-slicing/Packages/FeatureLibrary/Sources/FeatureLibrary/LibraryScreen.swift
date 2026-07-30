@@ -3,8 +3,14 @@ import DesignSystem
 import Domain
 import Infrastructure
 
-/// The Library feature's public entry point.
-public struct LibraryView: View {
+/// Displays everything the user has saved locally, across Music and Podcasts.
+///
+/// Renamed from `LibraryView` to `LibraryScreen` at extraction: every feature
+/// package's public entry point follows the `<Feature>Screen` convention
+/// from this chapter on. Library is extracted first — it's the smallest and
+/// newest feature, and the `FeatureLibraryDemo` app proves the payoff before
+/// Music Search and Podcasts get the same treatment.
+public struct LibraryScreen: View {
     @StateObject private var model = LibraryViewModel()
 
     public init() {}
@@ -16,7 +22,7 @@ public struct LibraryView: View {
                     ContentUnavailableView(
                         "Your Library is Empty",
                         systemImage: "books.vertical",
-                        description: Text("Save songs, movies, and audiobooks to see them here.")
+                        description: Text("Save songs and podcasts to see them here.")
                     )
                 } else {
                     List {
@@ -42,17 +48,22 @@ public struct LibraryView: View {
     }
 }
 
+/// The view model depends on the domain's `LibraryUseCase` — which owns the
+/// dedupe/sort business rules — rather than a repository directly. The
+/// concrete Core Data implementation is supplied by default for now; Chapter
+/// 6 will inject it from the composition root, which also makes this view
+/// model trivially testable with a mock repository.
 final class LibraryViewModel: ObservableObject {
     @Published var items: [SavedItem] = []
 
-    private let library: LibraryRepository
+    private let library: LibraryUseCase
 
-    init(library: LibraryRepository = CoreDataLibraryRepository()) {
+    init(library: LibraryUseCase = LibraryUseCase(repository: CoreDataLibraryRepository())) {
         self.library = library
     }
 
     func reload() {
-        items = library.fetchAll()
+        items = library.list()
     }
 
     func delete(at offsets: IndexSet) {

@@ -1,41 +1,105 @@
 # iTunesSearchApp — Chapter 4: Vertical Slicing
 
-End state of Chapter 4. Each user-facing feature is now its own Swift package,
-and the app target only composes them.
+A fully working iOS app that we refactor chapter by chapter. It searches the
+public **iTunes Search API** (no API key needed) for **music** and
+**podcasts**, and lets you save either kind of item to a local **Core Data**
+library.
 
-## Packages
+This folder is the **end state of Chapter 4**. Music, Podcasts, and Library
+are no longer views sharing one app target — each is its own Swift package:
 
-- `DesignSystem` (Ch.2) — colors, typography, components, the `Date.mediumString` helper.
-- `Domain` (Ch.3) — entities, repository protocols, use cases.
-- `Infrastructure` (Ch.3) — concrete iTunes + Core Data implementations.
-- `FeatureMusicSearch`, `FeatureMovies`, `FeatureAudiobooks`, `FeatureLibrary` (Ch.4)
-  — one vertical slice each, depending on DesignSystem + Domain + Infrastructure.
+- **`Packages/FeatureMusicSearch`** — `MusicSearchScreen` + `TrackRow`.
+  (Renamed from `MusicSearchView` at extraction.)
+- **`Packages/FeaturePodcasts`** — `PodcastsScreen` + `PodcastRow`.
+  (Renamed from `PodcastsView` at extraction.)
+- **`Packages/FeatureLibrary`** — `LibraryScreen`. (Renamed from
+  `LibraryView` at extraction; extracted first, proven by
+  `FeatureLibraryDemo`.)
 
-The app target (`Sources/App`) is down to two files: the `@main` entry and a
-`RootView` that wires the four feature views into a `TabView`.
+Each depends on the same three horizontal layers:
+
+- **`Packages/DesignSystem`** (Ch.2) — colors, typography, and components.
+- **`Packages/Domain`** (Ch.3) — entities, repository protocols, the
+  cross-cutting service contracts, and the use cases (`SearchMediaUseCase`,
+  `LibraryUseCase`). **Depends on nothing.**
+- **`Packages/Infrastructure`** (Ch.3) — DTOs + the concrete implementations
+  (`ITunesSearchRepository`, `CoreDataLibraryRepository`, the console
+  observability services). **Depends on Domain.**
+
+The app target itself shrinks to two files: `Sources/App/iTunesSearchApp.swift`
+(the `@main` entry) and `Sources/App/RootView.swift` (the `TabView` that
+composes the three features). It knows nothing else about how any feature
+works internally.
 
 ## Run it
 
+You need a Mac with Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+
 ```bash
 brew install xcodegen        # one time
+
 cd code/ch04-vertical-slicing
-xcodegen generate
+xcodegen generate            # creates iTunesSearchApp.xcodeproj from project.yml
 open iTunesSearchApp.xcodeproj
 ```
 
-Schemes: **iTunesSearchApp** (full app), **FeatureLibraryDemo** (the Library
-feature in isolation — the "preview app"), **DesignSystemCatalog**.
+Pick a scheme:
 
-## What this chapter demonstrates
+- **iTunesSearchApp** — the full app (Music, Podcasts, Library tabs).
+- **Catalog** — the design system in isolation, unchanged from Chapter 2.
+- **FeatureLibraryDemo** — Library alone, compiling only `FeatureLibrary` and
+  its dependencies. This is the fast inner loop the chapter is about: change
+  something in `Packages/FeatureLibrary`, build only this scheme, and watch
+  `FeatureMusicSearch`/`FeaturePodcasts` never even compile.
 
-- **Ownership & build isolation:** a team can work on `FeatureAudiobooks`
-  without touching the others' code.
-- **Preview apps:** `FeatureLibraryDemo` compiles only `FeatureLibrary` and its
-  dependencies, so it builds in seconds. The same pattern works for any feature.
+## The dependency graph
 
-## The trap this leaves open
+```text
+                              ┌─────────────────────┐
+                              │    iTunesSearchApp   │
+                              └──┬─────┬─────┬───────┘
+                                 │     │     │
+              ┌──────────────────┘     │     └──────────────────┐
+              ▼                        ▼                        ▼
+     FeatureMusicSearch          FeaturePodcasts            FeatureLibrary  ◄── FeatureLibraryDemo
+              │                        │                        │
+              └───────────┬────────────┴────────────┬───────────┘
+                           ▼                         ▼
+                     Infrastructure ───────────►   Domain
+                           │
+                           ▼
+                     DesignSystem ◄── (all three features)   Catalog ──► DesignSystem
+```
 
-Features still depend on the concrete `Infrastructure` package (they construct
-`ITunesSearchRepository()` / `CoreDataLibraryRepository()` inline), and there is
-no clean way yet for one feature to navigate into another without importing it.
-Chapter 5 inverts those dependencies; Chapter 6 adds the composition root.
+Each feature package depends on `Domain`, `DesignSystem`, and
+`Infrastructure`. That last edge is a **deliberate flaw**, called out in the
+package comments: a feature has no business depending on the concrete
+networking/database layer directly, only on the protocols `Domain` declares.
+Chapter 5 fixes it with dependency inversion.
+
+## The payoff: fast, isolated tests (unchanged since Chapter 3)
+
+```bash
+swift test --package-path Packages/Domain
+```
+
+## The trap this chapter leaves open
+
+Every feature package points straight at `Infrastructure` — the
+`FeatureLibraryDemo` app links Core Data and networking code the Library
+screen never calls. And next sprint brings **Movies**, whose detail screen
+Library will need to open: a feature importing another feature's package by
+name. Chapter 5 replaces both straight-line dependencies with protocols the
+features don't own.
+
+## Chapter map
+
+1. Ch.1 — the monolith (`ch01-the-monolith`).
+2. Ch.2 — extract the Design System (`ch02-design-system`).
+3. Ch.3 — extract Domain & Infrastructure, Library arrives (`ch03-domain-infrastructure`).
+4. Ch.4 — vertical slicing into feature packages (**this folder**).
+5. Ch.5 — dependency inversion behind protocols.
+6. Ch.6 — the composition root.
+
+> The `.xcodeproj` is intentionally **not** committed — it's generated. Re-run
+> `xcodegen generate` any time the source layout changes.

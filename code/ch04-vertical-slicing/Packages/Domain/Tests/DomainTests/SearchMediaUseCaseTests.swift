@@ -17,8 +17,7 @@ final class SearchMediaUseCaseTests: XCTestCase {
             lastTerm = term
             return stubbedTracks
         }
-        func searchMovies(term: String) async throws -> [Movie] { [] }
-        func searchAudiobooks(term: String) async throws -> [Audiobook] { [] }
+        func searchPodcasts(term: String) async throws -> [Podcast] { [] }
     }
 
     func testBlankQueryReturnsEmptyAndNeverHitsRepository() async throws {
