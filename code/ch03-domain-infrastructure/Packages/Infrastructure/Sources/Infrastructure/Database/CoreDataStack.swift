@@ -19,7 +19,7 @@ final class CoreDataStack {
     private init() {
         let model = CoreDataStack.makeModel()
         container = NSPersistentContainer(name: "iTunesSearchApp", managedObjectModel: model)
-        container.loadPersistentStores { _, error in
+        container.loadPersistentStores { [logger] _, error in
             if let error {
                 logger.log("Core Data failed to load store: \(error)")
             }

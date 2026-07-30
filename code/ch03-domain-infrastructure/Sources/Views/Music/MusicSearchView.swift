@@ -36,11 +36,17 @@ struct MusicSearchView: View {
     }
 
     private func runSearch() async {
+        guard !term.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isLoading = true
         errorMessage = nil
+        // MONOLITH NOTE: the view reaches straight for the global telemetry
+        // facade — convenient now, but it means this Music feature can't be
+        // tested without dragging analytics and crash reporting along too.
+        Services.analytics.track(AnalyticsEvent("music_search", ["term": term]))
         do {
             tracks = try await search.music(matching: term)
         } catch {
+            Services.crashReporter.record(error, context: ["feature": "music_search"])
             errorMessage = "Failed to load: \(error.localizedDescription)"
         }
         isLoading = false

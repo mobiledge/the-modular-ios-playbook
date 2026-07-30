@@ -4,8 +4,8 @@ import Domain
 /// The concrete `MediaSearchRepository` backed by the iTunes Search API.
 ///
 /// It decodes DTOs and maps them to domain entities, so callers receive clean
-/// `Track` / `Movie` / `Audiobook` values and never touch JSON. This is what the
-/// chapter calls `iTunesAPITrackRepository` — generalized to all media types.
+/// `Track` / `Podcast` values and never touch JSON. This is what the chapter
+/// calls `iTunesAPITrackRepository` — generalized to every media type.
 public final class ITunesSearchRepository: MediaSearchRepository {
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -24,13 +24,8 @@ public final class ITunesSearchRepository: MediaSearchRepository {
         return dtos.map { $0.toDomain() }
     }
 
-    public func searchMovies(term: String) async throws -> [Movie] {
-        let dtos: [MovieDTO] = try await fetch(term: term, media: "movie", entity: "movie")
-        return dtos.map { $0.toDomain() }
-    }
-
-    public func searchAudiobooks(term: String) async throws -> [Audiobook] {
-        let dtos: [AudiobookDTO] = try await fetch(term: term, media: "audiobook", entity: "audiobook")
+    public func searchPodcasts(term: String) async throws -> [Podcast] {
+        let dtos: [PodcastDTO] = try await fetch(term: term, media: "podcast", entity: "podcast")
         return dtos.map { $0.toDomain() }
     }
 

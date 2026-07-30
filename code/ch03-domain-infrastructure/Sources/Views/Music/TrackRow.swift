@@ -5,12 +5,15 @@ import Infrastructure
 
 /// A single row in the music list.
 ///
-/// It works through the `LibraryRepository` protocol from the domain; the
-/// concrete Core Data implementation is created inline for now.
+/// This is the whole point of Chapter 2: notice how little styling lives here
+/// now — the entire row is a `DSMediaRow` from the design system. Chapter 3
+/// adds one thing: a save-to-Library affordance. The row talks to the
+/// domain's `LibraryUseCase` — which owns the "don't save duplicates" rule —
+/// never directly to Core Data.
 struct TrackRow: View {
     let track: Track
 
-    private let library: LibraryRepository = CoreDataLibraryRepository()
+    private let library = LibraryUseCase(repository: CoreDataLibraryRepository())
     @State private var isSaved = false
 
     var body: some View {

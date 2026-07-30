@@ -58,7 +58,7 @@ targets:
   # A standalone catalog app that imports ONLY the DesignSystem. Designers and
   # developers can run this to review components in isolation from the app's
   # business logic and network — one of the big payoffs of the extraction.
-  DesignSystemCatalog:
+  Catalog:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
@@ -68,7 +68,7 @@ targets:
       - package: DesignSystem
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.DesignSystemCatalog
+        PRODUCT_BUNDLE_IDENTIFIER: com.playbook.Catalog
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES

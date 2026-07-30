@@ -34,31 +34,7 @@ struct TrackDTO: Decodable {
     }
 }
 
-struct MovieDTO: Decodable {
-    let trackId: Int
-    let trackName: String
-    let artistName: String
-    let artworkUrl100: URL?
-    let longDescription: String?
-    let releaseDate: Date?
-    let primaryGenreName: String?
-    let trackPrice: Double?
-
-    func toDomain() -> Movie {
-        Movie(
-            id: trackId,
-            title: trackName,
-            artist: artistName,
-            artworkURL: artworkUrl100,
-            overview: longDescription,
-            releaseDate: releaseDate,
-            genre: primaryGenreName,
-            price: trackPrice
-        )
-    }
-}
-
-struct AudiobookDTO: Decodable {
+struct PodcastDTO: Decodable {
     let collectionId: Int
     let collectionName: String
     let artistName: String
@@ -66,11 +42,11 @@ struct AudiobookDTO: Decodable {
     let releaseDate: Date?
     let primaryGenreName: String?
 
-    func toDomain() -> Audiobook {
-        Audiobook(
+    func toDomain() -> Podcast {
+        Podcast(
             id: collectionId,
-            title: collectionName,
-            author: artistName,
+            name: collectionName,
+            artist: artistName,
             artworkURL: artworkUrl100,
             releaseDate: releaseDate,
             genre: primaryGenreName

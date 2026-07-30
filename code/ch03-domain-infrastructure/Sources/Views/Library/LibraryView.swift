@@ -3,7 +3,7 @@ import DesignSystem
 import Domain
 import Infrastructure
 
-/// Displays everything the user has saved locally, across all media types.
+/// Displays everything the user has saved locally, across Music and Podcasts.
 struct LibraryView: View {
     @StateObject private var model = LibraryViewModel()
 
@@ -14,7 +14,7 @@ struct LibraryView: View {
                     ContentUnavailableView(
                         "Your Library is Empty",
                         systemImage: "books.vertical",
-                        description: Text("Save songs, movies, and audiobooks to see them here.")
+                        description: Text("Save songs and podcasts to see them here.")
                     )
                 } else {
                     List {
@@ -40,21 +40,22 @@ struct LibraryView: View {
     }
 }
 
-/// The view model now depends on the domain's `LibraryRepository` protocol.
-/// The concrete Core Data implementation is supplied by default for now;
+/// The view model now depends on the domain's `LibraryUseCase` — which owns
+/// the dedupe/sort business rules — rather than a repository directly. The
+/// concrete Core Data implementation is supplied by default for now;
 /// Chapter 6 will inject it from the composition root, which also makes this
 /// view model trivially testable with a mock repository.
 final class LibraryViewModel: ObservableObject {
     @Published var items: [SavedItem] = []
 
-    private let library: LibraryRepository
+    private let library: LibraryUseCase
 
-    init(library: LibraryRepository = CoreDataLibraryRepository()) {
+    init(library: LibraryUseCase = LibraryUseCase(repository: CoreDataLibraryRepository())) {
         self.library = library
     }
 
     func reload() {
-        items = library.fetchAll()
+        items = library.list()
     }
 
     func delete(at offsets: IndexSet) {
