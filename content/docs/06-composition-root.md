@@ -171,4 +171,4 @@ swift test --package-path Packages/Domain
 
 ---
 
-> **Next:** [Chapter 7: The Proof: Add One, Delete One]({{< relref "07-advanced-granularity" >}})
+> **Next:** [Chapter 7: The Proof: Add One, Delete One]({{< relref "07-the-proof" >}})

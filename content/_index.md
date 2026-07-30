@@ -20,4 +20,5 @@ This playbook demonstrates how to solve the real scaling challenges of iOS devel
 4. [Chapter 4: Vertical Slicing (Feature Modules)]({{< relref "docs/04-vertical-slicing" >}})
 5. [Chapter 5: Dependency Inversion & Interfaces]({{< relref "docs/05-dependency-inversion" >}})
 6. [Chapter 6: The Composition Root]({{< relref "docs/06-composition-root" >}})
-7. [Chapter 7: Advanced Granularity & Micro-Features]({{< relref "docs/07-advanced-granularity" >}})
+7. [Chapter 7: The Proof: Add One, Delete One]({{< relref "docs/07-the-proof" >}})
+8. [Chapter 7: Advanced Granularity & Micro-Features]({{< relref "docs/08-advanced-granularity" >}})

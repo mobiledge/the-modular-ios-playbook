@@ -1,6 +1,6 @@
 ---
 title: "Chapter 7: Advanced Granularity & Micro-Features"
-weight: 7
+weight: 8
 ---
 
 **The pain this chapter attacks: a feature module that has itself become a monolith.** When `FeatureMusicSearch` swells with caching, animations, analytics, and view logic, even a font tweak can trigger a 30-second recompile of the entire feature. By the end of this chapter, a UI change recompiles only the UI, and logic tests run without linking a single view.
