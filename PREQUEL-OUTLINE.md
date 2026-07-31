@@ -1,8 +1,13 @@
-# The Well-Built Monolith — Outline
+# iOS Architecture, One Skill at a Time — Outline
 
 *A prequel to The Modular iOS Playbook. The reader finishes with a disciplined, tested MVVM-C
 monolith — plus an AI skill library that can rebuild any part of it on demand — the app the
 Playbook will pick up on its first page.*
+
+The title means it both ways: each chapter grows a skill the reader keeps (an extraction, a
+testing pattern, a judgment call) and mints a literal AI skill the project keeps — one row of
+the ledger retired, one skill gained, until the architecture is something both the team and
+its tools know how to build.
 
 > **Contract with the sequel:** the Playbook will be revised so its Chapter 1 monolith IS this
 > book's end state (that revision is planned separately). The prequel therefore owns the road
