@@ -48,7 +48,8 @@ project-level instructions.
 
 ## The narrative
 
-A solo founder builds **iTunesSearchApp** — Music search, then Podcasts — from weekend
+A solo founder builds **Medley** — a media-discovery app: music search, then podcasts,
+backed by Apple's free iTunes Search API — from weekend
 prototype to the v1 a two-person startup ships at the start of The Modular iOS Playbook. The
 founder works alongside an AI assistant the whole way, and keeps noticing the same thing:
 *the assistant is exactly as good as the conventions it's been given.* Every chapter opens
@@ -256,7 +257,7 @@ into *rules the compiler enforces* is the story of **The Modular iOS Playbook**.
 ## End state (the sequel's new starting line)
 
 ```text
-iTunesSearchApp/
+Medley/
 ├── project.yml
 ├── CLAUDE.md           # the rulebook, grown one law per chapter
 ├── .claude/skills/     # add-model, add-endpoint, extract-subview, add-view-model,

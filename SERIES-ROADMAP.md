@@ -1,8 +1,9 @@
 # Series Roadmap
 
-One company. One app — **iTunesSearchApp** — followed from weekend prototype to mature
-product organization across four books. Each book answers one question, at an increasing
-scale:
+One company: **Medley**, a media-discovery startup. One app — Medley for iOS, where people
+search and save music, podcasts, movies, and audiobooks — followed from weekend prototype to
+mature product organization across four books. Each book answers one question, at an
+increasing scale:
 
 | Book | Title | Question | Scale |
 |---|---|---|---|
@@ -13,6 +14,12 @@ scale:
 
 The arc in four lines: **write better code → build better systems → build a better
 engineering organization → build a better product organization.**
+
+> **The product vs the plumbing:** Medley is the product and the company; Apple's free,
+> keyless iTunes Search API is merely the data source it happens to be built on — an
+> implementation detail readers benefit from (build and run every chapter, no signup) but
+> never the star. Existing code still uses the historical `iTunesSearchApp` target name;
+> the rename to `Medley` lands with the planned Book 2 revision, not before.
 
 ## House style (all four books)
 
